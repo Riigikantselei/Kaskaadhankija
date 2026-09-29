@@ -220,7 +220,8 @@ export default async function PartnerRoundPage({
           </span>
           <span className="text-[13px] text-[var(--color-muted)]" data-testid="unit-price">
             · {HIND.osalejaKohta.toLowerCase()}{' '}
-            <strong className="text-[var(--color-text)]">{formatEurCents(participant.unitPriceEur)}</strong>
+            <strong className="text-[var(--color-text)]">{formatEurCents(participant.unitPriceEur)}</strong>{' '}
+            (raamlepingu pakkumisest)
           </span>
         </div>
         <p className="mt-1 text-[var(--color-muted)]">

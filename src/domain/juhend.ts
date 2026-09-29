@@ -590,7 +590,7 @@ export const SECTIONS: readonly Section[] = [
       },
       {
         kind: 'para',
-        text: `Tabeli päises seisab teie **„${HIND.osalejaKohta}“** — teie raamlepingu hind selles hankeosas, üks number kogu vooru peale. „${HIND.ruhmaTaitumisel}“ on see korrutatud koolituse maksimaalse osalejate arvuga: nii palju maksaks koolitus, kui rühm täitub. Osalejate arv on ülempiir, mitte lubadus. Teiste partnerite hindu te ei näe.`,
+        text: `Tabeli päises seisab teie **„${HIND.osalejaKohta}“** — teie raamlepingu hind selles hankeosas, **see, mille pakkusite hankes**, üks number kogu vooru peale. Voorus seda hinda ei määrata ega muudeta; kui number ei vasta teie pakkumisele, võtke ühendust tellijaga. „${HIND.ruhmaTaitumisel}“ on see korrutatud koolituse maksimaalse osalejate arvuga: nii palju maksaks koolitus, kui rühm täitub. Osalejate arv on ülempiir, mitte lubadus. Teiste partnerite hindu te ei näe.`,
       },
       {
         kind: 'para',

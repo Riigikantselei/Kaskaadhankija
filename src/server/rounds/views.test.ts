@@ -5,10 +5,10 @@
 
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { trainings } from '@/db/schema';
+import { lotPartners, trainings } from '@/db/schema';
 import { createHarness, seedLotWithPartners, type LotFixture, type TestHarness } from '../test-support';
 import { closeRound, confirmAllocation, confirmMarks, createRound, publishRound } from './engine';
-import { commitmentsByDay, partnerCalendar } from './views';
+import { commitmentsByDay, partnerCalendar, roundsForPartner } from './views';
 
 let harness: TestHarness;
 let fx: LotFixture;
@@ -82,5 +82,25 @@ describe('[N-02] the partner calendar', () => {
     const roundId = openRound([fx.trainingIds[0]!]);
     harness.write((ctx) => confirmMarks(ctx, roundId, fx.partnerIds[1]!, { marks: [fx.trainingIds[0]!], cap: null }));
     expect(calendar()).toEqual([]);
+  });
+});
+
+describe('[V-01] a partner sees only the rounds it was offered', () => {
+  it('leaves out a round of its lot published while it was not a member — its page would be a 404', () => {
+    // Partner 3 is inactive when the round goes out, so it is not a participant.
+    harness.write((ctx) =>
+      ctx.tx.update(lotPartners).set({ isActive: false }).where(eq(lotPartners.id, fx.lotPartnerIds[2]!)).run(),
+    );
+    const roundId = harness.write((ctx) => {
+      const id = createRound(ctx, { lotId: fx.lotId, trainingIds: fx.trainingIds });
+      publishRound(ctx, id);
+      return id;
+    });
+    harness.write((ctx) =>
+      ctx.tx.update(lotPartners).set({ isActive: true }).where(eq(lotPartners.id, fx.lotPartnerIds[2]!)).run(),
+    );
+
+    expect(harness.read((db) => roundsForPartner(db, fx.partnerIds[0]!)).map((r) => r.id)).toEqual([roundId]);
+    expect(harness.read((db) => roundsForPartner(db, fx.partnerIds[2]!))).toEqual([]);
   });
 });

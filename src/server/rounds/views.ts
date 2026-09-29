@@ -221,15 +221,19 @@ export function participantForPartner(
   return participantsOf(tx, roundId).find((p) => memberships.includes(p.lotPartnerId));
 }
 
-/** Rounds visible to one company: those of any lot it is a member of. */
+/**
+ * Rounds visible to one company: those it was offered — a participant row, made
+ * at publication [V-01]. A round of its lot from before it joined (or while its
+ * membership was inactive) was never offered to it, and its page would be a 404.
+ */
 export function roundsForPartner(tx: Reader, partnerId: string) {
-  const lotIds = tx
-    .select({ lotId: lotPartners.lotId })
+  const lotPartnerIds = tx
+    .select({ id: lotPartners.id })
     .from(lotPartners)
     .where(eq(lotPartners.partnerId, partnerId))
     .all()
-    .map((r) => r.lotId);
-  if (lotIds.length === 0) return [];
+    .map((r) => r.id);
+  if (lotPartnerIds.length === 0) return [];
 
   return tx
     .select({
@@ -247,7 +251,13 @@ export function roundsForPartner(tx: Reader, partnerId: string) {
     })
     .from(rounds)
     .innerJoin(lots, eq(lots.id, rounds.lotId))
-    .where(and(inArray(rounds.lotId, lotIds), inArray(rounds.status, ['open', 'closed', 'confirmed'])))
+    .innerJoin(roundParticipants, eq(roundParticipants.roundId, rounds.id))
+    .where(
+      and(
+        inArray(roundParticipants.lotPartnerId, lotPartnerIds),
+        inArray(rounds.status, ['open', 'closed', 'confirmed']),
+      ),
+    )
     .all()
     .sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
 }
