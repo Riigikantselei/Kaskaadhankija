@@ -81,8 +81,8 @@ function summarize(rows: StoredRepresentativeRow[]): ImportSummary {
 }
 
 /**
- * The checks that need the database: a buyer-team address, or an address that
- * is active for a different company. Applied at preview and again at apply, so
+ * The check that needs the database: a buyer-team address. (An address active
+ * for another company is fine — one person may represent two [L-08].) Applied at preview and again at apply, so
  * a sheet confirmed later still meets the state it lands in.
  */
 function checkAgainstDatabase(ctx: Ctx, rows: StoredRepresentativeRow[]): void {
@@ -94,33 +94,12 @@ function checkAgainstDatabase(ctx: Ctx, rows: StoredRepresentativeRow[]): void {
       .all()
       .map((u) => u.email.toLowerCase()),
   );
-  const activeElsewhere = new Map(
-    ctx.tx
-      .select({
-        email: partnerRepresentatives.email,
-        regCode: partners.regCode,
-        partnerName: partners.name,
-      })
-      .from(partnerRepresentatives)
-      .innerJoin(partners, eq(partners.id, partnerRepresentatives.partnerId))
-      .where(eq(partnerRepresentatives.isActive, true))
-      .all()
-      .map((r) => [r.email, r] as const),
-  );
-
   for (const row of rows) {
     if (!row.value) continue;
     if (buyerEmails.has(row.value.email)) {
       row.errors.push({
         field: 'e_post',
         message: 'see aadress kuulub tellimismeeskonna kasutajale ja ei saa olla partneri esindaja',
-      });
-    }
-    const holder = activeElsewhere.get(row.value.email);
-    if (holder && holder.regCode !== row.value.regCode) {
-      row.errors.push({
-        field: 'e_post',
-        message: `see aadress on juba aktiivne partneri ${holder.partnerName} esindajana — lõpeta see esindus enne`,
       });
     }
     if (row.errors.length > 0) row.value = null;
@@ -530,9 +509,15 @@ export function setRepresentativeActive(ctx: Ctx, id: string, active: boolean): 
     const holder = ctx.tx
       .select({ id: partnerRepresentatives.id })
       .from(partnerRepresentatives)
-      .where(and(eq(partnerRepresentatives.email, rep.email), eq(partnerRepresentatives.isActive, true)))
+      .where(
+        and(
+          eq(partnerRepresentatives.partnerId, rep.partnerId),
+          eq(partnerRepresentatives.email, rep.email),
+          eq(partnerRepresentatives.isActive, true),
+        ),
+      )
       .get();
-    if (holder) throw new Error('See e-posti aadress on juba aktiivne esindaja.');
+    if (holder) throw new Error('See e-posti aadress on selle partneri juba aktiivne esindaja.');
   }
   ctx.tx
     .update(partnerRepresentatives)

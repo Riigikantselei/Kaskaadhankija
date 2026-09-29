@@ -5,12 +5,14 @@
 
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { loginCodes, partnerRepresentatives, sessions, users } from '@/db/schema';
+import { loginCodes, partnerRepresentatives, partners, sessions, users } from '@/db/schema';
 import { env } from '@/lib/env';
 import {
   CODE_MAX_ATTEMPTS,
   CODE_TTL_MS,
   SESSION_TTL_MS,
+  activeCompaniesForEmail,
+  companiesForEmail,
   createSession,
   emailAllowsAdmin,
   findSubjectByEmail,
@@ -23,6 +25,7 @@ import {
   purgeAuthRows,
   resolveSession,
   revokeSession,
+  switchSessionCompany,
   verifyLoginCode,
 } from './codes';
 import { createHarness, seedLotWithPartners, type LotFixture, type TestHarness } from '../test-support';
@@ -300,5 +303,59 @@ describe('the admin allowlist [L-08]', () => {
     if (result.outcome !== 'sent') return;
     const verified = verify('kummaline@riik.ee', result.code);
     expect(verified).toMatchObject({ ok: true, who: { existing: { kind: 'representative', id: 'r-odd' } } });
+  });
+});
+
+describe('[L-08] one address, several companies', () => {
+  const addSecondCompany = () =>
+    harness.write((ctx) =>
+      ctx.tx
+        .insert(partnerRepresentatives)
+        .values({ id: 'r-jaan-2', partnerId: fx.partnerIds[1]!, name: 'Jaan Kask', email: 'jaan@partner.ee', role: 'esindaja', createdAt: ctx.at, updatedAt: ctx.at })
+        .run(),
+    );
+  const openSession = () =>
+    harness.write((ctx) => createSession(ctx.tx, findSubjectByEmail(ctx.tx, 'jaan@partner.ee')!, EVIDENCE, NOW));
+
+  it('lets one address represent two companies, one code for both', () => {
+    addSecondCompany();
+    expect(harness.read((db) => companiesForEmail(db, 'Jaan@Partner.ee')).map((c) => c.representativeId).sort()).toEqual(
+      ['r-jaan', 'r-jaan-2'],
+    );
+    expect(issue('jaan@partner.ee').outcome).toBe('sent');
+  });
+
+  it('still refuses the same address twice in one company', () => {
+    expect(() =>
+      harness.write((ctx) =>
+        ctx.tx
+          .insert(partnerRepresentatives)
+          .values({ id: 'r-dup', partnerId: fx.partnerIds[0]!, name: 'Jaan', email: 'jaan@partner.ee', role: 'asendaja', createdAt: ctx.at, updatedAt: ctx.at })
+          .run(),
+      ),
+    ).toThrow(/UNIQUE/);
+  });
+
+  it('moves a session to the other company without a new code', () => {
+    addSecondCompany();
+    const { token, sessionId } = openSession();
+    const first = harness.read((db) => resolveSession(db, token, NOW))!.subjectId;
+    const other = first === 'r-jaan' ? 'r-jaan-2' : 'r-jaan';
+
+    const switched = harness.write((ctx) => switchSessionCompany(ctx.tx, sessionId, other));
+    expect(switched?.representativeId).toBe(other);
+    expect(harness.read((db) => resolveSession(db, token, NOW))!.subjectId).toBe(other);
+  });
+
+  it('never moves a session to somebody else’s row or a deactivated company', () => {
+    addSecondCompany();
+    const { sessionId } = openSession();
+    expect(harness.write((ctx) => switchSessionCompany(ctx.tx, sessionId, 'r-vana'))).toBeNull();
+
+    harness.write((ctx) => ctx.tx.update(partners).set({ isActive: false }).where(eq(partners.id, fx.partnerIds[1]!)).run());
+    expect(harness.read((db) => activeCompaniesForEmail(db, 'jaan@partner.ee')).map((c) => c.representativeId)).toEqual(['r-jaan']);
+    expect(harness.write((ctx) => switchSessionCompany(ctx.tx, sessionId, 'r-jaan-2'))).toBeNull();
+    // and the sign-in opens on the company that can still act
+    expect(harness.read((db) => findSubjectByEmail(db, 'jaan@partner.ee'))).toMatchObject({ id: 'r-jaan' });
   });
 });

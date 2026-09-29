@@ -192,6 +192,30 @@ export function addWorkingDays(from: Date, n: number, localTime = '17:00'): Date
   return tallinnWallToUtc(cursor.year, cursor.month, cursor.day, hour, minute);
 }
 
+/** [V-03] The shortest answering window, whatever the lot's working days say. */
+export const MIN_RESPONSE_WINDOW_MS = 24 * 3_600_000;
+
+/**
+ * [V-03] The default response deadline: `n` working days after the send day at
+ * `localTime`, rolled to the next working day while that would leave partners
+ * less than `minWindowMs`. With one working day at 17:00, an offer sent at
+ * 18:00 on a Monday closes on Wednesday rather than 23 hours later.
+ */
+export function responseDeadline(
+  from: Date,
+  n: number,
+  localTime = '17:00',
+  minWindowMs = MIN_RESPONSE_WINDOW_MS,
+): Date {
+  let days = n;
+  let deadline = addWorkingDays(from, days, localTime);
+  while (deadline.getTime() - from.getTime() < minWindowMs && days < n + 10) {
+    days++;
+    deadline = addWorkingDays(from, days, localTime);
+  }
+  return deadline;
+}
+
 /**
  * The mirror of `addWorkingDays`: the `n`-th working day *before* `from`, at
  * `localTime` Tallinn time. The starting day never counts.

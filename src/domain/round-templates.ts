@@ -208,55 +208,83 @@ export function renderProjectionChanged(
   );
 }
 
-/** [D-05] Reminder 24 hours before the deadline. */
+/** [D-05] What a confirmer's reminder says about their position. */
+export interface ReminderProjection {
+  projectedLines: string[];
+  lostLines: string[];
+  /** [L-28] groups projected, when the lines are clusters rather than trainings */
+  projectedCount?: number;
+}
+
+export interface ReminderConfirmed {
+  confirmedText: string;
+  /** null in a sealed round [N-06] */
+  projection: ReminderProjection | null;
+}
+
+/**
+ * [D-05] The round's one reminder, at the moment the buyer chose. Worded by the
+ * partner's position, so one mail does what the 24-hour reminder and the
+ * two-hour final summary used to do between them:
+ *
+ *  - not answered, or only a draft: silence counts as declining;
+ *  - confirmed: what they confirmed and — in a dynamic round — what the
+ *    projection gives them now and which of their marks would go elsewhere,
+ *    each with its [N-03] reason. Names nobody [N-04].
+ *
+ * Unconfirmed edits on top of a confirmation are called out: they do not count.
+ */
 export function renderDeadlineReminder(
-  input: RoundNoticeBase & { contactName: string; statusText: string; projectionText: string },
+  input: RoundNoticeBase & {
+    contactName: string;
+    remainingText: string;
+    /** a draft that differs from what is confirmed (or nothing confirmed yet) */
+    unconfirmedChanges: boolean;
+    /** null: nothing confirmed */
+    confirmed: ReminderConfirmed | null;
+  },
 ): RenderedNotice {
+  const unit = unitOf(input);
+  const opening = `Voor ${input.roundCode} (${input.lotLabel}) sulgub ${input.deadlineText} (${input.remainingText}).`;
+
+  if (!input.confirmed) {
+    return composeNotice(
+      `Meeldetuletus: voor ${input.roundCode} sulgub ${input.deadlineText}`,
+      [
+        `Lugupeetud ${input.contactName}`,
+        `${opening} Te ei ole oma valikut veel kinnitanud.`,
+        input.unconfirmedChanges
+          ? `Teil on märkeid, mis on salvestatud, kuid kinnitamata. Kinnitamata märkeid ei arvestata.`
+          : '',
+        `Kui te tähtajaks ei kinnita, loetakse, et loobute selle vooru ${unit.ofMany} pakkumisest.`,
+      ],
+      { url: input.url, label: 'Ava voor ja kinnita' },
+    );
+  }
+
+  const projection = input.confirmed.projection;
+  const projectedCount = projection ? (projection.projectedCount ?? projection.projectedLines.length) : 0;
   return composeNotice(
     `Meeldetuletus: voor ${input.roundCode} sulgub ${input.deadlineText}`,
     [
       `Lugupeetud ${input.contactName}`,
-      `Voor ${input.roundCode} (${input.lotLabel}) sulgub ${input.deadlineText}.`,
-      input.statusText,
-      input.projectionText,
-      'Tähtajaks kinnitamata valikut ei arvestata — loevad ainult kinnitatud märked.',
-    ],
-    { url: input.url, label: 'Ava voor' },
-  );
-}
-
-/**
- * [D-11] The personal summary two hours before the deadline, for a partner who
- * has confirmed: their confirmed choice, the trainings the projection gives
- * them now, and their marks that would go elsewhere — each with its [N-03]
- * reason. Names nobody [N-04].
- */
-export function renderFinalSummary(
-  input: RoundNoticeBase & {
-    contactName: string;
-    remainingText: string;
-    confirmedText: string;
-    projectedLines: string[];
-    lostLines: string[];
-    /** [L-28] groups projected, when the lines are clusters rather than trainings */
-    projectedCount?: number;
-  },
-): RenderedNotice {
-  const unit = unitOf(input);
-  // In a cluster round a line is a cluster, so the count is passed in.
-  const projectedCount = input.projectedCount ?? input.projectedLines.length;
-  return composeNotice(
-    `Lõppkokkuvõte: voor ${input.roundCode} sulgub ${input.deadlineText}`,
-    [
-      `Lugupeetud ${input.contactName}`,
-      `Voor ${input.roundCode} (${input.lotLabel}) sulgub ${input.deadlineText} (${input.remainingText}). ${input.confirmedText}`,
-      input.projectedLines.length > 0
-        ? `Praeguse seisuga prognoositakse teile ${projectedCount} ${unit.partitive}:`
-        : `Praeguse seisuga ei prognoosita teile sellest voorust ühtegi ${unit.partitive}.`,
-      list(input.projectedLines),
-      input.lostLines.length > 0 ? `Teie märgitud ${unit.many}, mis praeguse seisuga läheksid mujale:` : '',
-      list(input.lostLines),
-      'Prognoos on esialgne ja võib muutuda kuni tähtajani. Kui soovite valikut muuta, kinnitage see enne tähtaega — loevad ainult kinnitatud märked.',
+      `${opening} ${input.confirmed.confirmedText}`,
+      input.unconfirmedChanges
+        ? 'Olete oma valikut pärast kinnitamist muutnud, kuid muudatust ei ole kinnitatud. Arvesse läheb viimane kinnitatud valik.'
+        : '',
+      projection
+        ? projection.projectedLines.length > 0
+          ? `Praeguse seisuga prognoositakse teile ${projectedCount} ${unit.partitive}:`
+          : `Praeguse seisuga ei prognoosita teile sellest voorust ühtegi ${unit.partitive}.`
+        : 'Jaotus selgub pärast vastamistähtaega.',
+      projection ? list(projection.projectedLines) : '',
+      projection && projection.lostLines.length > 0
+        ? `Teie märgitud ${unit.many}, mis praeguse seisuga läheksid mujale:`
+        : '',
+      projection ? list(projection.lostLines) : '',
+      projection
+        ? 'Prognoos on esialgne ja võib muutuda kuni tähtajani. Kui soovite valikut muuta, kinnitage see enne tähtaega — loevad ainult kinnitatud märked.'
+        : 'Kui soovite valikut muuta, kinnitage see enne tähtaega — loevad ainult kinnitatud märked.',
     ],
     { url: input.url, label: 'Ava voor' },
   );

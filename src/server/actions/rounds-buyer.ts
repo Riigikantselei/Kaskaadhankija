@@ -30,6 +30,7 @@ import {
 import { generateProtocolForEndedRound } from '../rounds/protocol';
 import { assertBuyerActor } from '../auth/actor';
 import { parseEstonianInstant } from '@/domain/round-definition';
+import { reminderRuleFromFields, type ReminderRule } from '@/domain/reminder';
 import { runDueJobs } from '../rounds/jobs';
 import type { VisibilityMode } from '@/domain/round-statuses';
 import { isCapOptions } from '@/domain/round-statuses';
@@ -89,9 +90,17 @@ export async function publishRoundAction(form: FormData): Promise<ActionOutcome>
     deadlineAt = parsed.value;
   }
 
+  // [D-05] the reminder; absent fields (an older form) mean the lot default
+  let reminder: ReminderRule | undefined;
+  if (fieldText(form, 'reminderMode')) {
+    const parsed = reminderRuleFromFields((name) => fieldText(form, name));
+    if (parsed.problem !== null) return fail(parsed.problem);
+    reminder = parsed.rule;
+  }
+
   try {
     await buyerWrite(
-      (ctx) => publishRound(ctx, roundId, { extraWorkingDays, visibilityMode, deadlineAt }),
+      (ctx) => publishRound(ctx, roundId, { extraWorkingDays, visibilityMode, deadlineAt, reminder }),
       [ROUNDS, `${ROUNDS}/${roundId}`, DASHBOARD],
     );
     return ok('Voor on avaldatud kõigile hankeosa partneritele.');

@@ -89,8 +89,9 @@ export default async function PartnerNotificationsPage() {
             <h2>Teavituste seaded</h2>
             <p className="mt-1 text-[13px] text-[var(--color-muted)]">
               Formaalsed teated — vooru avaldamine, muudatused, meeldetuletus ja vooru lõppemine —
-              tulevad e-postiga alati. <strong>Teabekirjad</strong> ({INFORMATIONAL_NOTICES_TEXT}) on
-              teie enda valik; siia logisse jäävad need igal juhul.
+              tulevad e-postiga alati, nii et uutest voorudest saate teada ka ilma lehel käimata.{' '}
+              <strong>Teabekirjad</strong> ({INFORMATIONAL_NOTICES_TEXT}) on teie enda valik; siia
+              logisse jäävad need igal juhul.
             </p>
             {informationalOn === null ? (
               <p className="mt-2 text-[13px] text-[var(--color-muted)]">

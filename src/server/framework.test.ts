@@ -396,7 +396,7 @@ describe('[L-21] the official contact is the sign-in', () => {
     expect(activeEmails()).not.toContain('jaan.kask@tehisaru-naidis.ee');
   });
 
-  it('refuses a contact address that already represents somebody else', () => {
+  it('accepts a contact address that already represents another company — one person, two firms [L-08]', () => {
     const membership = harness.read((db) =>
       db
         .select({ id: lotPartners.id })
@@ -405,15 +405,26 @@ describe('[L-21] the official contact is the sign-in', () => {
         .where(eq(partners.regCode, '10000001'))
         .get(),
     )!;
-    expect(() =>
-      harness.write((ctx) =>
-        updateLotPartnerContact(ctx, membership.id, {
-          contactName: 'Keegi',
-          contactEmail: 'kontakt.10000002@naidis.ee',
-          unitPriceEur: 0,
-        }),
-      ),
-    ).toThrow(/juba aktiivne/);
+    harness.write((ctx) =>
+      updateLotPartnerContact(ctx, membership.id, {
+        contactName: 'Keegi',
+        contactEmail: 'kontakt.10000002@naidis.ee',
+        unitPriceEur: 0,
+      }),
+    );
+    const holders = harness.read((db) =>
+      db
+        .select({ partnerId: partnerRepresentatives.partnerId })
+        .from(partnerRepresentatives)
+        .where(
+          and(
+            eq(partnerRepresentatives.email, 'kontakt.10000002@naidis.ee'),
+            eq(partnerRepresentatives.isActive, true),
+          ),
+        )
+        .all(),
+    );
+    expect(new Set(holders.map((h) => h.partnerId)).size).toBe(2);
   });
 
   it('keeps a listed deputy through every sync, retires an unlisted non-contact, and never lets the screen switch a contact off', () => {
@@ -465,17 +476,21 @@ describe('[L-21] the official contact is the sign-in', () => {
 
   it('reports an address it had to skip rather than failing the import', () => {
     const report = harness.write((ctx) => {
-      // Both companies now claim one address, which the database cannot hold
-      // twice; the import's own check would have caught it first.
+      // A buyer-team address cannot represent a partner; the import's own
+      // check would have caught it first.
+      ctx.tx
+        .insert(users)
+        .values({ id: 'u-skip', name: 'Tellija', email: 'tellija@riik.ee', role: 'member', isActive: true, createdAt: ctx.at })
+        .run();
       ctx.tx
         .update(lotPartners)
-        .set({ contactEmail: 'jaan.kask@tehisaru-naidis.ee' })
+        .set({ contactEmail: 'tellija@riik.ee' })
         .where(eq(lotPartners.rank, 2))
         .run();
       return syncFrameworkContacts(ctx);
     });
-    expect(report.skipped).toHaveLength(1);
-    expect(report.skipped[0]?.reason).toMatch(/juba aktiivne/);
+    expect(report.skipped.length).toBeGreaterThanOrEqual(1);
+    expect(report.skipped[0]?.reason).toMatch(/tellimismeeskonna/);
   });
 });
 

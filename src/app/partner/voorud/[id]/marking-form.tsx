@@ -253,8 +253,10 @@ export function MarkingForm({
             <h2>Vooru koolitused ({trainings.length})</h2>
           )}
           <span className="text-[12px] text-[var(--color-muted)]">
-            Teie {HIND.osalejaKohta.toLowerCase()}: <strong>{unitPriceText}</strong> — „{HIND.ruhmaTaitumisel}“ on
-            see korrutatud {isCluster ? 'rühma suurusega' : 'koolituse maksimaalse osalejate arvuga'}.
+            Teie {HIND.osalejaKohta.toLowerCase()}: <strong>{unitPriceText}</strong> — see on teie
+            raamlepingu hind hankepakkumisest ja voorus seda ei muudeta. „{HIND.ruhmaTaitumisel}“ on
+            see korrutatud {isCluster ? 'rühma suurusega' : 'koolituse maksimaalse osalejate arvuga'}. Kui
+            hind ei vasta teie pakkumisele, võtke ühendust tellijaga.
           </span>
           {editable && (
             <span className="text-[13px] text-[var(--color-muted)]">

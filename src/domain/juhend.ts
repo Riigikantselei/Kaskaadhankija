@@ -99,8 +99,6 @@ export interface Section {
 export const KOODI_KEHTIVUS_MIN = 10;
 /** `SESSION_TTL_MS` in days. Pinned to the code by `juhend.test.ts`. */
 export const SESSIOONI_KEHTIVUS_PAEVI = 30;
-/** `FINAL_SUMMARY_WINDOW_MS` in hours [D-11]. Pinned to the code by `juhend.test.ts`. */
-export const LOPPKOKKUVOTE_TUNDE = 2;
 
 /* ------------------------------------------------------------------ *
  * quoted on-screen strings [see rule 1 above]
@@ -456,7 +454,7 @@ export const SECTIONS: readonly Section[] = [
   {
     id: 'uuendused',
     title: 'Mis on uuenenud (13.09.2026)',
-    rules: ['D-01', 'E-10', 'D-12', 'L-25', 'T-08', 'D-11', 'K-06', 'L-27', 'N-02', 'V-09', 'K-10', 'N-03'],
+    rules: ['D-01', 'E-10', 'D-12', 'L-25', 'T-08', 'D-05', 'K-06', 'L-27', 'N-02', 'V-09', 'K-10', 'N-03'],
     pilotOnly: true,
     blocks: [
       {
@@ -472,7 +470,7 @@ export const SECTIONS: readonly Section[] = [
           `**Seis uueneb ise** umbes iga ${AUTO_REFRESH_MS / 60_000} minuti järel, kuni voor on avatud; prognoosi kõrval on seisu aeg.`,
           '**Märkimine:** nupud „Märgi kõik saadaval“, „Märgi kõik“ ja „Tühjenda“; ülempiir on sõnaselge valik „Piirmäära ei ole“ või „Kuni“.',
           '**Kalender:** menüüs on „Minu kalender“ ja märkimistabel hoiatab „Samal päeval: …“, kui teil on sel päeval juba koolitus.',
-          `**Teated:** koolitused on e-kirjas ühe kaupa omal real; kinnitanud partner saab ${LOPPKOKKUVOTE_TUNDE} tundi enne tähtaega lõppkokkuvõtte; vooru sulgumisel tuleb kiri „Voor on lõppenud“ esialgse tulemusega; teabekirjad saab lehel „Teavitused“ e-postist välja lülitada.`,
+          '**Teated:** voor saadab teile kolm kirja — pakkumise, ühe meeldetuletuse enne tähtaega (kinnitanud partnerile koos praeguse prognoosiga) ja vooru sulgumisel tuleb kirja „Voor on lõppenud“ esialgse tulemusega; koolitused on e-kirjas ühe kaupa omal real; kviitungid saab lehel „Teavitused“ e-postist välja lülitada.',
           '**Tellimus** vormistatakse praegu väljaspool rakendust — rakendus tellimusi ei koosta ega saada.',
           '**Klastrivoor:** tellija võib tellida mahu perioodi jooksul; te ütlete rühmade arvu, mitte ei märgi ridu (vt osa „Klastrivoor: rühmad, mitte kuupäevad“).',
           '**Sõnastus:** olekud on teie-vormis („Prognoosis teile“) ja keskkonna nimi on ühtselt „testkeskkond“.',
@@ -526,6 +524,11 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'para',
         text: `Sisselogimine kehtib **${SESSIOONI_KEHTIVUS_PAEVI} päeva**, nii et iga kord uut koodi küsima ei pea. Välja logides lõpeb see kohe.`,
+      },
+      {
+        kind: 'para',
+        text:
+          'Kui esindate sama aadressiga **mitut ettevõtet**, küsib süsteem pärast sisselogimist, kelle nimel tegutsete. Ettevõtet saab hiljem vahetada menüüst **„Vaheta ettevõtet“** — uut koodi selleks vaja ei ole. Voorud, kinnitused ja teated on iga ettevõtte kohta eraldi.',
       },
       {
         kind: 'para',
@@ -587,7 +590,7 @@ export const SECTIONS: readonly Section[] = [
       },
       {
         kind: 'para',
-        text: `Tabeli päises seisab teie **„${HIND.osalejaKohta}“** — teie raamlepingu hind selles hankeosas, üks number kogu vooru peale. „${HIND.ruhmaTaitumisel}“ on see korrutatud koolituse maksimaalse osalejate arvuga: nii palju maksaks koolitus, kui rühm täitub. Osalejate arv on ülempiir, mitte lubadus. Teiste partnerite hindu te ei näe.`,
+        text: `Tabeli päises seisab teie **„${HIND.osalejaKohta}“** — teie raamlepingu hind selles hankeosas, **see, mille pakkusite hankes**, üks number kogu vooru peale. Voorus seda hinda ei määrata ega muudeta; kui number ei vasta teie pakkumisele, võtke ühendust tellijaga. „${HIND.ruhmaTaitumisel}“ on see korrutatud koolituse maksimaalse osalejate arvuga: nii palju maksaks koolitus, kui rühm täitub. Osalejate arv on ülempiir, mitte lubadus. Teiste partnerite hindu te ei näe.`,
       },
       {
         kind: 'para',
@@ -766,7 +769,7 @@ export const SECTIONS: readonly Section[] = [
   {
     id: 'loobumine',
     title: 'Kui ükski koolitus ei sobi',
-    rules: ['K-07', 'K-08', 'E-03', 'D-05', 'D-11'],
+    rules: ['K-07', 'K-08', 'E-03', 'D-05'],
     blocks: [
       {
         kind: 'para',
@@ -794,11 +797,7 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'para',
         text:
-          '24 tundi enne tähtaega saadab süsteem meeldetuletuse, milles on kirjas, mis teie seis on: kas olete kinnitanud, loobunud või vastamata jätnud.',
-      },
-      {
-        kind: 'para',
-        text: `Kui olete kinnitanud, saate **${LOPPKOKKUVOTE_TUNDE} tundi enne tähtaega** veel isikliku lõppkokkuvõtte: mis teile praeguse seisuga prognoositakse ja millised teie märgitud koolitused läheksid mujale — iga koolituse juures põhjus. Nii ei ole tulemus tähtajal üllatus. Kui teie viimane kinnitus on tehtud juba viimase ${LOPPKOKKUVOTE_TUNDE} tunni sees, kokkuvõtet ei tule: sama seis on teie kinnituse kviitungis.`,
+          'Enne tähtaega saadab süsteem **ühe meeldetuletuse** — tellija valib, mitu tundi enne tähtaega või mis kellaajal. Selles on kirjas teie seis: kas olete kinnitanud või vastamata jätnud. Kui olete kinnitanud, on meeldetuletuses ka see, mis teile praeguse seisuga prognoositakse ja millised teie märgitud koolitused läheksid mujale — iga koolituse juures põhjus. Nii ei ole tulemus tähtajal üllatus. Kui olete vooru koolitustest loobunud, meeldetuletust ei tule.',
       },
     ],
   },
@@ -877,20 +876,19 @@ export const SECTIONS: readonly Section[] = [
   {
     id: 'teavitused',
     title: 'Teated ja kes neid saab',
-    rules: ['D-02', 'D-03', 'D-04', 'D-05', 'D-12', 'D-10', 'D-11', 'L-27'],
+    rules: ['D-02', 'D-03', 'D-04', 'D-05', 'D-12', 'D-10', 'L-27'],
     blocks: [
       {
         kind: 'para',
-        text: 'Ühe vooru jooksul koostab süsteem teile mitu teadet. Kõik need on menüüs **Teavitused** ka siis, kui kiri kohale ei jõua.',
+        text: 'Tavalise vooru jooksul saate e-postiga kolm kirja: vooru avaldamise, ühe meeldetuletuse ja vooru lõppemise teate. Lisaks tulevad teie enda kinnituste kviitungid ja erandlikud teated (muudatus, tühistamine). Kõik teated on menüüs **Teavitused** ka siis, kui kiri kohale ei jõua.',
       },
       {
         kind: 'list',
         items: [
           '**Vooru avaldamine** — koolituste loend ja vastamistähtaeg.',
           '**Kinnituse või loobumise kviitung** — iga kinnituse kohta eraldi.',
-          '**Prognoosi muutus** — kui teist eespool olev partner muudab oma valikut nii, et teie prognoos muutub. Neid ei saadeta tihedamalt kui kord nelja tunni jooksul ja viimasel ööpäeval enam mitte.',
-          '**Meeldetuletus** — 24 tundi enne tähtaega.',
-          `**Lõppkokkuvõte** — ${LOPPKOKKUVOTE_TUNDE} tundi enne tähtaega, kui olete kinnitanud: praegu prognoositud koolitused ja mujale minevad märked koos põhjusega.`,
+          '**Meeldetuletus** — üks kord enne tähtaega, tellija valitud ajal; kui olete kinnitanud, koos praegu prognoositud koolituste ja mujale minevate märgetega.',
+          '**Prognoosi muutus** — ainult menüüs Teavitused, e-postiga seda ei saadeta: kui teist eespool olev partner muudab oma valikut nii, et teie prognoos muutub. Vooru lehel näete prognoosi alati jooksvalt.',
           '**Vooru muudatus või tühistamine** — koos põhjendusega.',
           '**Voor on lõppenud** — vooru sulgumisel: teie kinnitatud valik ja mitu koolitust teile esialgse jaotuse järgi läheks. See on esialgne tulemus, mitte tellimus.',
         ],
@@ -899,7 +897,7 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'para',
         text:
-          'Kui kirju on liiga palju, lülitage lehel **Teavitused** plokis **„Teavituste seaded“** teabekirjad — kviitungid, prognoosi muutused ja lõppkokkuvõte — e-postist välja. Need jäävad ikka logisse. Vooru avaldamine, muudatused, meeldetuletus ja vooru lõppemise teade tulevad e-postiga alati. Seadistus on teie isiklik, mitte ettevõtte oma.',
+          'Kui kirju on liiga palju, lülitage lehel **Teavitused** plokis **„Teavituste seaded“** teabekirjad — kinnituste ja loobumiste kviitungid — e-postist välja. Need jäävad ikka logisse. Vooru avaldamine, muudatused, meeldetuletus ja vooru lõppemise teade tulevad e-postiga alati. Seadistus on teie isiklik, mitte ettevõtte oma.',
       },
       {
         kind: 'para',

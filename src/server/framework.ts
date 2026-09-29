@@ -191,7 +191,11 @@ export function applyLotRows(ctx: Ctx, rows: readonly LotRow[]): LotApplyReport 
 
     if (!existing) {
       const id = crypto.randomUUID();
-      ctx.tx.insert(lots).values({ id, code: row.code, createdAt: ctx.at, ...fields }).run();
+      ctx.tx
+        .insert(lots)
+        // [V-03] a new lot answers in one working day unless the workbook says otherwise
+        .values({ id, code: row.code, createdAt: ctx.at, responseDeadlineWorkingDays: 1, ...fields })
+        .run();
       report.created.push(row.code);
       logAudit(ctx, {
         eventType: 'lot.created',
@@ -253,21 +257,8 @@ export function representativeCollision(
     .get();
   if (buyer) return 'see aadress kuulub tellimismeeskonna kasutajale ja ei saa olla partneri esindaja';
 
-  const elsewhere = tx
-    .select({ partnerName: partners.name })
-    .from(partnerRepresentatives)
-    .innerJoin(partners, eq(partners.id, partnerRepresentatives.partnerId))
-    .where(
-      and(
-        eq(partnerRepresentatives.email, email),
-        eq(partnerRepresentatives.isActive, true),
-        ne(partnerRepresentatives.partnerId, partnerId),
-      ),
-    )
-    .get();
-  if (elsewhere) {
-    return `see aadress on juba aktiivne partneri ${elsewhere.partnerName} esindajana — lõpeta see esindus enne`;
-  }
+  // An address may represent several companies — one person, two firms. The
+  // sign-in then asks which company to act for [L-08].
   return null;
 }
 

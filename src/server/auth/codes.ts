@@ -22,7 +22,7 @@
 
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { and, desc, eq, gt, isNull, lt, or, sql } from 'drizzle-orm';
-import { loginCodes, partnerRepresentatives, sessions, users, type SessionSubjectKind } from '@/db/schema';
+import { loginCodes, partnerRepresentatives, partners, sessions, users, type SessionSubjectKind } from '@/db/schema';
 import { env, isDemoMode } from '@/lib/env';
 import type { Db, Tx } from '../context';
 
@@ -188,21 +188,89 @@ export function findSubjectByEmail(tx: Reader, rawEmail: string): Subject | null
     };
   }
 
-  const representative = tx
-    .select()
-    .from(partnerRepresentatives)
-    .where(and(eq(partnerRepresentatives.email, email), eq(partnerRepresentatives.isActive, true)))
-    .get();
+  // One address may represent several companies; the first one listed opens
+  // the session and the sign-in then offers the choice [L-08].
+  const representative = companiesForEmail(tx, email)[0];
   if (representative) {
     return {
       kind: 'representative',
-      id: representative.id,
+      id: representative.representativeId,
       name: representative.name,
       email: representative.email,
       partnerId: representative.partnerId,
     };
   }
   return null;
+}
+
+export interface CompanyChoice {
+  representativeId: string;
+  partnerId: string;
+  partnerName: string;
+  /** false for a company the buyer has deactivated: listed, but nothing to act for */
+  partnerActive: boolean;
+  name: string;
+  email: string;
+}
+
+/**
+ * Every company an address is an active representative of, active companies
+ * first, then by name [L-08]. One person can represent two firms; each is a
+ * representative row of its own, so the notices and the audit trail stay per
+ * company. A deactivated company is still listed — the sign-in gate has always
+ * gone by the representative's own flag — but sorts last and cannot be chosen.
+ */
+export function companiesForEmail(tx: Reader, rawEmail: string): CompanyChoice[] {
+  const email = normalizeEmail(rawEmail);
+  return tx
+    .select({
+      representativeId: partnerRepresentatives.id,
+      partnerId: partnerRepresentatives.partnerId,
+      partnerName: partners.name,
+      partnerActive: partners.isActive,
+      name: partnerRepresentatives.name,
+      email: partnerRepresentatives.email,
+    })
+    .from(partnerRepresentatives)
+    .innerJoin(partners, eq(partners.id, partnerRepresentatives.partnerId))
+    .where(and(eq(partnerRepresentatives.email, email), eq(partnerRepresentatives.isActive, true)))
+    .all()
+    .sort(
+      (a, b) =>
+        Number(b.partnerActive) - Number(a.partnerActive) ||
+        a.partnerName.localeCompare(b.partnerName, 'et') ||
+        a.representativeId.localeCompare(b.representativeId),
+    );
+}
+
+/** The companies an address can actually act for right now. */
+export function activeCompaniesForEmail(tx: Reader, rawEmail: string): CompanyChoice[] {
+  return companiesForEmail(tx, rawEmail).filter((c) => c.partnerActive);
+}
+
+/**
+ * Move a live representative session to another company the same address may
+ * act for — the mailbox was proved once, so no new code [L-08]. Returns the
+ * choice switched to, or null when the session is not a representative's or
+ * the target is not one of that address's companies.
+ */
+export function switchSessionCompany(
+  tx: Reader,
+  sessionId: string,
+  representativeId: string,
+): CompanyChoice | null {
+  const session = tx.select().from(sessions).where(eq(sessions.id, sessionId)).get();
+  if (!session || session.revokedAt !== null || session.subjectKind !== 'representative') return null;
+  const current = tx
+    .select({ email: partnerRepresentatives.email })
+    .from(partnerRepresentatives)
+    .where(eq(partnerRepresentatives.id, session.subjectId))
+    .get();
+  if (!current) return null;
+  const target = activeCompaniesForEmail(tx, current.email).find((c) => c.representativeId === representativeId);
+  if (!target) return null;
+  tx.update(sessions).set({ subjectId: target.representativeId }).where(eq(sessions.id, sessionId)).run();
+  return target;
 }
 
 /* ------------------------------------------------------------------ *

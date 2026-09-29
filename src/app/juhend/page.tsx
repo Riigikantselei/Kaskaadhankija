@@ -18,6 +18,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { isDemoMode } from '@/lib/env';
+import { getSessionActor } from '@/server/auth/actor';
+import { areaHome } from '@/server/auth/identity';
 import {
   AJATELG,
   KASKAAD,
@@ -272,17 +274,30 @@ function Plokk({ block }: { block: Block }) {
  * the page
  * ------------------------------------------------------------------ */
 
-export default function JuhendPage() {
+export default async function JuhendPage() {
   // Pilot passages are gated rather than deleted, so a go-live deployment
   // (DEMO_MODE unset) cannot show a reader a caveat that no longer holds.
   const sections = SECTIONS.filter((section) => !section.pilotOnly || isDemoMode);
+  // Public, but not blind: a signed-in reader is offered the way back, not a
+  // sign-in button that reads as if they had been signed out.
+  const signedIn = await getSessionActor();
 
   return (
     <main className="kh-juhend mx-auto max-w-[860px] px-5 py-8 pb-16">
       <div className="kh-no-print mb-6 flex flex-wrap items-center justify-between gap-3 text-[13px]">
-        <Link href="/sisene" className="kh-btn kh-btn-primary" data-testid="juhend-sisene">
-          Logi sisse
-        </Link>
+        {signedIn ? (
+          <Link
+            href={areaHome(signedIn.kind === 'buyer' ? 'buyer' : 'partner')}
+            className="kh-btn kh-btn-primary"
+            data-testid="juhend-tagasi"
+          >
+            {signedIn.kind === 'buyer' ? 'Tagasi tellija vaatesse' : 'Tagasi voorude juurde'}
+          </Link>
+        ) : (
+          <Link href="/sisene" className="kh-btn kh-btn-primary" data-testid="juhend-sisene">
+            Logi sisse
+          </Link>
+        )}
         <span className="text-[var(--color-muted)]">
           Trükkimiseks või salvestamiseks kasutage brauseri prindifunktsiooni (Ctrl/Cmd + P).
         </span>

@@ -20,7 +20,7 @@ export const LOT_SEED: readonly LotRow[] = [
     name: 'Koolitused ruumirendiga',
     description:
       'Töötubade läbiviimine koolitaja pakutud ruumides koos vajaliku tehnika ja ruumiteenustega.',
-    responseDeadlineWorkingDays: 3,
+    responseDeadlineWorkingDays: 1,
     deadlineLocalTime: '17:00',
     reviewWorkingDays: 2,
     workloadThreshold: 25,
@@ -35,7 +35,7 @@ export const LOT_SEED: readonly LotRow[] = [
     name: 'Koolitused ruumirendita',
     description:
       'Töötubade läbiviimine tellija määratud asukohas. Koolitaja vastutab sisu ja läbiviimise eest, ruumi ei paku.',
-    responseDeadlineWorkingDays: 3,
+    responseDeadlineWorkingDays: 1,
     deadlineLocalTime: '17:00',
     reviewWorkingDays: 2,
     workloadThreshold: 4,
@@ -50,7 +50,7 @@ export const LOT_SEED: readonly LotRow[] = [
     name: 'Veebikoolitused',
     description:
       'Töötubade ettevalmistamine ja läbiviimine digikeskkonnas (Teams, Zoom või muu kokkulepitud platvorm).',
-    responseDeadlineWorkingDays: 2,
+    responseDeadlineWorkingDays: 1,
     deadlineLocalTime: '17:00',
     reviewWorkingDays: 2,
     workloadThreshold: 25,
@@ -64,7 +64,7 @@ export const LOT_SEED: readonly LotRow[] = [
     name: 'Suursündmused',
     description:
       'Suurema osalejate arvuga sündmuste korraldamine ja läbiviimine (ettekanne, loeng, kaasloome või häkaton), sh tehniline koordineerimine, modereerimine, registreerimine ja logistika.',
-    responseDeadlineWorkingDays: 5,
+    responseDeadlineWorkingDays: 1,
     deadlineLocalTime: '17:00',
     reviewWorkingDays: 2,
     workloadThreshold: 25,

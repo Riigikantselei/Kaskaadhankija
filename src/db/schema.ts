@@ -38,6 +38,7 @@ import type {
 } from '../domain/round-statuses';
 import type { County, OrderLanguage, WorkshopType } from '../domain/statuses';
 import type { DateKind, RoundKind } from '../domain/clusters';
+import type { ReminderMode } from '../domain/reminder';
 import type { AllocationInput, AllocationResult, CapKind } from '../domain/allocate';
 
 const uuid = () => text().$defaultFn(() => crypto.randomUUID());
@@ -110,6 +111,14 @@ export const lots = sqliteTable(
     responseDeadlineWorkingDays: integer('response_deadline_working_days').notNull().default(3),
     /** [V-03] Tallinn wall-clock time the deadline falls at, 'HH:MM' */
     deadlineLocalTime: text('deadline_local_time').notNull().default('17:00'),
+    /**
+     * [D-05] The lot's default moment for the round's one reminder: whole
+     * hours before the deadline, or a Tallinn time of day. A round may
+     * override it at publication. Validated in code, like `defaultCapOptions`.
+     */
+    reminderMode: text('reminder_mode').$type<ReminderMode>().notNull().default('hours_before'),
+    reminderHoursBefore: integer('reminder_hours_before').notNull().default(4),
+    reminderLocalTime: text('reminder_local_time').notNull().default('10:00'),
     /** [T-07][L-09] how long the buyer expects to take over the review */
     reviewWorkingDays: integer('review_working_days').notNull().default(2),
     /** [T-03] warning level only — never acts on its own */
@@ -208,7 +217,7 @@ export const partnerRepresentatives = sqliteTable(
       .notNull()
       .references(() => partners.id),
     name: text().notNull(),
-    /** lowercased; unique among active representatives */
+    /** lowercased; unique among a company's active representatives */
     email: text().notNull(),
     role: text().$type<RepresentativeRole>().notNull().default('esindaja'),
     /**
@@ -244,10 +253,12 @@ export const partnerRepresentatives = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => [
-    // One person signs in as one company: an address is active for at most one.
-    uniqueIndex('partner_representatives_email_active_unique')
-      .on(t.email)
+    // An address is active at most once per company. One person may represent
+    // several companies; the sign-in asks which one to act for [L-08].
+    uniqueIndex('partner_representatives_partner_email_active_unique')
+      .on(t.partnerId, t.email)
       .where(sql`is_active = 1`),
+    index('partner_representatives_email_idx').on(t.email),
     index('partner_representatives_partner_idx').on(t.partnerId),
     oneOf('role', ['esindaja', 'asendaja']),
   ],
@@ -375,6 +386,15 @@ export const rounds = sqliteTable(
     note: text().notNull().default(''),
     publishedAt: integer('published_at'),
     deadlineAt: integer('deadline_at'),
+    /**
+     * [D-05] When the one reminder goes out, and the rule it came from (so an
+     * extension can move it). Null: no reminder in this round — a test round
+     * too short for one, or a round from before the rule existed.
+     */
+    reminderAt: integer('reminder_at'),
+    reminderMode: text('reminder_mode').$type<ReminderMode>(),
+    reminderHoursBefore: integer('reminder_hours_before'),
+    reminderLocalTime: text('reminder_local_time'),
     /** [T-07] when partners are told to expect the decision */
     expectedDecisionAt: integer('expected_decision_at'),
     closedAt: integer('closed_at'),

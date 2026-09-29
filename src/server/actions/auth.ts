@@ -18,10 +18,13 @@ import { isDemoMode } from '@/lib/env';
 import { logAudit } from '../audit';
 import {
   CODE_TTL_MS,
+  activeCompaniesForEmail,
   createSession,
   issueLoginCode,
   normalizeEmail,
+  resolveSession,
   revokeSession,
+  switchSessionCompany,
   verifyLoginCode,
   type Subject,
 } from '../auth/codes';
@@ -158,7 +161,9 @@ export async function verifyLoginCodeAction(form: FormData): Promise<void> {
           summary: `${subject.name} (${email}) logis sisse`,
           after: { email, subjectKind: subject.kind, sessionId: session.sessionId },
         });
-        return { ok: true as const, token: session.token, subject };
+        // [L-08] one address, several companies: ask which one first
+        const companyCount = subject.kind === 'representative' ? activeCompaniesForEmail(tx, email).length : 0;
+        return { ok: true as const, token: session.token, subject, companyCount };
       }
       logAudit(auditCtx(tx, evidence), {
         eventType: verified.reason === 'locked' ? 'login.locked' : 'login.failed',
@@ -188,7 +193,43 @@ export async function verifyLoginCodeAction(form: FormData): Promise<void> {
   // Every sign-in starts as oneself: an admin chooses again on the act-as
   // screen rather than inheriting last week's choice.
   store.delete(PERSONA_COOKIE);
-  redirect(homeFor(result.subject));
+  redirect(result.companyCount > 1 ? CHOOSE_COMPANY_PATH : homeFor(result.subject));
+}
+
+/** [L-08] Where a person who represents several companies picks one. */
+const CHOOSE_COMPANY_PATH = '/partner/ettevote';
+
+/**
+ * [L-08] Act for another company the same address represents. The mailbox was
+ * proved at sign-in, so the session moves without a new code; the move is
+ * audited under the company switched to.
+ */
+export async function switchCompanyAction(form: FormData): Promise<void> {
+  const representativeId = fieldText(form, 'representativeId');
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (!token) redirect('/sisene');
+  const evidence = await requestEvidence().catch(() => NO_EVIDENCE);
+  const switched = getDb().transaction(
+    (tx) => {
+      const session = resolveSession(tx, token);
+      if (!session) return null;
+      const target = switchSessionCompany(tx, session.id, representativeId);
+      if (target) {
+        logAudit(
+          auditCtx(tx, evidence, { kind: 'partner', id: target.partnerId, label: target.name }),
+          {
+            eventType: 'login.company_switched',
+            summary: `${target.name} (${target.email}) tegutseb nüüd ettevõtte ${target.partnerName} esindajana`,
+            after: { sessionId: session.id, representativeId: target.representativeId, partnerId: target.partnerId },
+          },
+        );
+      }
+      return target;
+    },
+    { behavior: 'immediate' },
+  );
+  redirect(switched ? '/partner/voorud' : CHOOSE_COMPANY_PATH);
 }
 
 /** Revoke the session behind the cookie and drop the cookie. No redirect. */

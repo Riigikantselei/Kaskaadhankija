@@ -11,6 +11,7 @@
 
 import { eq } from 'drizzle-orm';
 import { lots } from '@/db/schema';
+import { describeReminderRule, reminderRuleFromFields } from '@/domain/reminder';
 import { isCapOptions, type VisibilityMode } from '@/domain/round-statuses';
 import { logAudit } from '../audit';
 import { adminWrite, describeError, fail, fieldNumber, fieldText, ok, type ActionOutcome } from './helpers';
@@ -27,6 +28,10 @@ export async function updateLotConfigAction(form: FormData): Promise<ActionOutco
   const rawCapOptions = fieldText(form, 'defaultCapOptions') || 'trainings';
   if (!isCapOptions(rawCapOptions)) return fail('Tundmatu piirmäära valik.');
   const defaultCapOptions = rawCapOptions;
+
+  const reminder = reminderRuleFromFields((name) => fieldText(form, name));
+  if (reminder.problem !== null) return fail(reminder.problem);
+  const rule = reminder.rule;
 
   if (!responseDeadlineWorkingDays || responseDeadlineWorkingDays < 1) {
     return fail('Vastamistähtaeg peab olema vähemalt üks tööpäev.');
@@ -60,13 +65,16 @@ export async function updateLotConfigAction(form: FormData): Promise<ActionOutco
             defaultVisibilityMode,
             defaultCapOptions,
             maxParticipantsPerGroup,
+            reminderMode: rule.mode,
+            reminderHoursBefore: rule.mode === 'hours_before' ? rule.hoursBefore : before.reminderHoursBefore,
+            reminderLocalTime: rule.mode === 'local_time' ? rule.localTime : before.reminderLocalTime,
           })
           .where(eq(lots.id, lotId))
           .run();
 
         logAudit(ctx, {
           eventType: 'lot.config_changed',
-          summary: `${before.code} kaskaadi seaded muudetud: ${responseDeadlineWorkingDays} tööpäeva kell ${deadlineLocalTime}, töömahu piir ${workloadThreshold}, nähtavus ${defaultVisibilityMode === 'dynamic' ? 'dünaamiline' : 'suletud'}, piirmäära liigid ${defaultCapOptions}, rühma ülempiir ${maxParticipantsPerGroup ?? 'puudub'}`,
+          summary: `${before.code} kaskaadi seaded muudetud: ${responseDeadlineWorkingDays} tööpäeva kell ${deadlineLocalTime}, töömahu piir ${workloadThreshold}, nähtavus ${defaultVisibilityMode === 'dynamic' ? 'dünaamiline' : 'suletud'}, piirmäära liigid ${defaultCapOptions}, rühma ülempiir ${maxParticipantsPerGroup ?? 'puudub'}, meeldetuletus ${describeReminderRule(rule)}`,
           lotId,
           before: {
             responseDeadlineWorkingDays: before.responseDeadlineWorkingDays,
@@ -76,6 +84,7 @@ export async function updateLotConfigAction(form: FormData): Promise<ActionOutco
             defaultVisibilityMode: before.defaultVisibilityMode,
             defaultCapOptions: before.defaultCapOptions,
             maxParticipantsPerGroup: before.maxParticipantsPerGroup,
+            reminder: { mode: before.reminderMode, hoursBefore: before.reminderHoursBefore, localTime: before.reminderLocalTime },
           },
           after: {
             responseDeadlineWorkingDays,
@@ -85,6 +94,7 @@ export async function updateLotConfigAction(form: FormData): Promise<ActionOutco
             defaultVisibilityMode,
             defaultCapOptions,
             maxParticipantsPerGroup,
+            reminder: rule,
           },
         });
       },
