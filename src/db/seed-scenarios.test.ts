@@ -97,7 +97,9 @@ describe('Stsenaarium A on Lisa B', () => {
 
     expect(hours(NOW - round.publishedAt!), 'avaldatud tundi tagasi').toBeLessThan(24);
     expect(round.deadlineAt!).toBeGreaterThan(NOW);
-    expect(hours(round.deadlineAt! - NOW), 'tähtajani jäänud tunde').toBeGreaterThan(40);
+    // [V-03] one working day, never less than 24 hours from publication
+    expect(hours(round.deadlineAt! - round.publishedAt!), 'vastamisaken tundides').toBeGreaterThanOrEqual(24);
+    expect(hours(round.deadlineAt! - NOW), 'tähtajani jäänud tunde').toBeGreaterThan(12);
   });
 
   it('seats A, B, C in the ranks Lisa B gives them', () => {

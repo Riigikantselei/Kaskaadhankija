@@ -191,7 +191,11 @@ export function applyLotRows(ctx: Ctx, rows: readonly LotRow[]): LotApplyReport 
 
     if (!existing) {
       const id = crypto.randomUUID();
-      ctx.tx.insert(lots).values({ id, code: row.code, createdAt: ctx.at, ...fields }).run();
+      ctx.tx
+        .insert(lots)
+        // [V-03] a new lot answers in one working day unless the workbook says otherwise
+        .values({ id, code: row.code, createdAt: ctx.at, responseDeadlineWorkingDays: 1, ...fields })
+        .run();
       report.created.push(row.code);
       logAudit(ctx, {
         eventType: 'lot.created',

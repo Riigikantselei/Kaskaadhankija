@@ -8,7 +8,7 @@
 
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { notifications, rounds } from '@/db/schema';
+import { emailDeliveries, notifications, rounds } from '@/db/schema';
 import { createHarness, seedLotWithPartners, type LotFixture, type TestHarness } from '../test-support';
 import { confirmMarks, createRound, publishRound } from './engine';
 import { runDueJobs } from './jobs';
@@ -36,6 +36,7 @@ function timePasses(ms: number): void {
         .set({
           publishedAt: row.publishedAt === null ? null : row.publishedAt - ms,
           deadlineAt: row.deadlineAt === null ? null : row.deadlineAt - ms,
+          reminderAt: row.reminderAt === null ? null : row.reminderAt - ms,
           expectedDecisionAt:
             row.expectedDecisionAt === null ? null : row.expectedDecisionAt - ms,
         })
@@ -104,15 +105,17 @@ describe('runDueJobs', () => {
     expect(runDueJobs(harness.db).closed).toHaveLength(2);
   });
 
-  it('sends the reminder inside the final 24 hours, once', () => {
+  it('sends the reminder when it falls due, once [D-05]', () => {
     const roundId = publish();
     const deadline = harness.read((db) =>
       db.select().from(rounds).where(eq(rounds.id, roundId)).get(),
     )!.deadlineAt!;
 
-    // Bring the deadline to twelve hours from now.
-    timePasses(deadline - 12 * 3_600_000 - Date.now());
+    // Five hours out: the lot's reminder (four hours before) is not due yet.
+    timePasses(deadline - 5 * 3_600_000 - Date.now());
+    expect(runDueJobs(harness.db).remindersSent).toBe(0);
 
+    timePasses(2 * 3_600_000);
     expect(runDueJobs(harness.db).remindersSent).toBe(3);
     expect(runDueJobs(harness.db).remindersSent).toBe(0);
     expect(statusOf(roundId)).toBe('open');
@@ -131,54 +134,38 @@ describe('runDueJobs', () => {
     ).toHaveLength(0);
   });
 
-  it('sends the final summary inside the last two hours, to those who confirmed, once [D-11]', () => {
-    // The runner reads the real clock and confirmations are append-only, so the
-    // confirmation is made three hours ago rather than moved there.
-    harness.now = Date.now() - 3 * 3_600_000;
+  it('mails a partner three times in a round: the offer, the reminder, the result', () => {
     const roundId = publish();
-    harness.write((ctx) =>
-      confirmMarks(ctx, roundId, fx.partnerIds[0], { marks: [fx.trainingIds[0]], cap: null }),
-    );
-    harness.now = Date.now();
     const deadline = harness.read((db) =>
       db.select().from(rounds).where(eq(rounds.id, roundId)).get(),
     )!.deadlineAt!;
 
-    // Twelve hours out: the reminder is due, the summary is not.
-    timePasses(deadline - 12 * 3_600_000 - Date.now());
-    let report = runDueJobs(harness.db);
-    expect(report.remindersSent).toBe(3);
-    expect(report.finalSummariesSent).toBe(0);
+    timePasses(deadline - 3 * 3_600_000 - Date.now());
+    runDueJobs(harness.db);
+    timePasses(4 * 3_600_000);
+    runDueJobs(harness.db);
+    expect(statusOf(roundId)).toBe('closed');
 
-    // One hour out: the summary goes to the one partner who confirmed, once.
-    timePasses(11 * 3_600_000);
-    report = runDueJobs(harness.db);
-    expect(report.finalSummariesSent).toBe(1);
-    expect(runDueJobs(harness.db).finalSummariesSent).toBe(0);
-    expect(
-      harness.read((db) =>
-        db.select().from(notifications).where(eq(notifications.type, 'reminder_final')).all(),
-      ),
-    ).toHaveLength(1);
-    expect(statusOf(roundId)).toBe('open');
+    const mailed = harness.read((db) =>
+      db
+        .select({ type: notifications.type })
+        .from(notifications)
+        .innerJoin(emailDeliveries, eq(emailDeliveries.notificationId, notifications.id))
+        .where(eq(notifications.recipientLotPartnerId, fx.lotPartnerIds[1]!))
+        .all()
+        .map((row) => row.type),
+    );
+    expect(mailed).toEqual(['round_published', 'reminder_24h', 'round_closed_partner']);
   });
 
-  it('never summarises a round it has just closed', () => {
-    harness.now = Date.now() - 3 * 3_600_000;
+  it('sends no reminder in a round without one', () => {
     const roundId = publish();
-    harness.write((ctx) =>
-      confirmMarks(ctx, roundId, fx.partnerIds[0], { marks: [fx.trainingIds[0]], cap: null }),
-    );
-    harness.now = Date.now();
-    timePasses(10 * 86_400_000);
-    const report = runDueJobs(harness.db);
-    expect(report.closed).toHaveLength(1);
-    expect(report.finalSummariesSent).toBe(0);
-    expect(
-      harness.read((db) =>
-        db.select().from(notifications).where(eq(notifications.type, 'reminder_final')).all(),
-      ),
-    ).toHaveLength(0);
+    harness.write((ctx) => ctx.tx.update(rounds).set({ reminderAt: null }).where(eq(rounds.id, roundId)).run());
+    const deadline = harness.read((db) =>
+      db.select().from(rounds).where(eq(rounds.id, roundId)).get(),
+    )!.deadlineAt!;
+    timePasses(deadline - 60_000 - Date.now());
+    expect(runDueJobs(harness.db).remindersSent).toBe(0);
   });
 
   it('ignores draft and cancelled rounds', () => {

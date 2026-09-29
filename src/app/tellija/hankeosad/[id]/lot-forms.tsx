@@ -1,7 +1,9 @@
 'use client';
 
 import { ActionButton, ActionForm } from '@/components/action-form';
+import { ReminderFields } from '@/components/reminder-fields';
 import { RankChip, StatusBadge } from '@/components/status-badge';
+import type { ReminderRule } from '@/domain/reminder';
 import { CAP_OPTIONS_LABELS, CAP_OPTIONS_VALUES, type CapOptions } from '@/domain/round-statuses';
 import { updateLotConfigAction } from '@/server/actions/lots';
 import { deactivateLotPartnerAction } from '@/server/actions/rounds-buyer';
@@ -22,6 +24,8 @@ export function LotConfigForm({
     defaultCapOptions: CapOptions;
     /** [K-06][L-28] the framework's ceiling on one group; null = none */
     maxParticipantsPerGroup: number | null;
+    /** [D-05] the default moment of the round's one reminder */
+    reminder: ReminderRule;
   };
   openRoundCodes: string[];
 }) {
@@ -57,7 +61,9 @@ export function LotConfigForm({
             className="kh-input mt-1"
           />
           <span className="mt-1 block text-[12px] text-[var(--color-muted)]">
-            Avaldamise päev ei lähe arvesse. Nädalavahetused ja riigipühad jäetakse vahele.
+            Avaldamise päev ei lähe arvesse. Nädalavahetused ja riigipühad jäetakse vahele. Kui
+            tähtaeg jääks avaldamisest vähem kui 24 tunni kaugusele, lükkub see järgmisse
+            tööpäeva.
           </span>
         </label>
 
@@ -123,6 +129,13 @@ export function LotConfigForm({
             impordil hoiatuse; klastri rühm üle piiri lükatakse tagasi.
           </span>
         </label>
+
+        <div className="sm:col-span-2 lg:col-span-3">
+          <ReminderFields
+            initial={lot.reminder}
+            hint="Vaikimisi aeg; iga vooru avaldamisel saab seda muuta. Voor saadab partnerile kolm kirja: pakkumise, selle meeldetuletuse ja tulemuse tähtajal."
+          />
+        </div>
 
         <label className="block sm:col-span-2">
           <span className="text-[12.5px] font-semibold">Vaikimisi nähtavusrežiim</span>

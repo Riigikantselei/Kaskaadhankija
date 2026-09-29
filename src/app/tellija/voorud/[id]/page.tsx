@@ -75,6 +75,10 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
       lotName: lots.name,
       lotDeadlineTime: lots.deadlineLocalTime,
       lotResponseDays: lots.responseDeadlineWorkingDays,
+      lotReminderMode: lots.reminderMode,
+      lotReminderHoursBefore: lots.reminderHoursBefore,
+      lotReminderLocalTime: lots.reminderLocalTime,
+      reminderAt: rounds.reminderAt,
     })
     .from(rounds)
     .innerJoin(lots, eq(lots.id, rounds.lotId))
@@ -272,6 +276,14 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
             {participants.some((p) => p.excludedAt !== null) &&
               ` (${participants.filter((p) => p.excludedAt !== null).length} välja arvatud)`}
           </dd>
+          {round.publishedAt !== null && (
+            <>
+              <dt className="text-[var(--color-muted)]">Meeldetuletus</dt>
+              <dd className="font-semibold tabular-nums" data-testid="round-reminder-at">
+                {round.reminderAt !== null ? formatDateTimeShort(round.reminderAt) : 'ei saadeta'}
+              </dd>
+            </>
+          )}
           <dt className="text-[var(--color-muted)]">Otsust oodata</dt>
           <dd className="font-semibold tabular-nums">
             {round.expectedDecisionAt ? formatDateTimeShort(round.expectedDecisionAt) : '—'}
@@ -328,6 +340,11 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
             round.plannedDeadlineAt ? tallinnLocalInput(round.plannedDeadlineAt) : null
           }
           testFloorSeconds={isDemoMode ? env.TEST_DEADLINE_FLOOR_SECONDS : undefined}
+          reminder={{
+            mode: round.lotReminderMode,
+            hoursBefore: round.lotReminderHoursBefore,
+            localTime: round.lotReminderLocalTime,
+          }}
           trainings={trainingRows.map((t) => ({
             id: t.id,
             code: t.code,

@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_FRAMEWORK_IDENTITY } from './framework';
-import { composeNotice, renderConfirmationReceipt, renderFinalSummary, renderRoundPublished } from './round-templates';
+import { composeNotice, renderConfirmationReceipt, renderDeadlineReminder, renderRoundPublished } from './round-templates';
 
 const lines = [
   'KK-2026-101 — Töötuba 1 Tallinna teenistujatele · 15.09.2026 · Töötuba 1 · Harju maakond · 28 osalejat',
@@ -85,7 +85,7 @@ describe('the templates that carry a training list', () => {
   });
 });
 
-describe('[D-11] the final summary', () => {
+describe('[D-05] the one reminder', () => {
   const base = {
     framework: DEFAULT_FRAMEWORK_IDENTITY,
     roundCode: 'VOOR-2026-001',
@@ -93,13 +93,20 @@ describe('[D-11] the final summary', () => {
     deadlineText: '15.09.2026 17:00',
     url: 'https://example.test/partner/voorud/r1',
     contactName: 'Jaan Kask',
-    remainingText: '1 h 58 min',
-    confirmedText: 'Teie kinnitatud valik (15.09.2026 09:12): 2 koolitust, piirmäär 1 koolitust.',
+    remainingText: '3 h 58 min',
+    unconfirmedChanges: false,
   };
+  const confirmedText = 'Teie kinnitatud valik (15.09.2026 09:12): 2 koolitust, piirmäär 1 koolitust.';
 
   it('keeps the projected and the lost trainings as two lists, each item on its own line', () => {
-    const notice = renderFinalSummary({ ...base, projectedLines: [lines[0]!], lostLines: [`${lines[1]} — ületab teie piirmäära`] });
-    expect(notice.title).toBe('Lõppkokkuvõte: voor VOOR-2026-001 sulgub 15.09.2026 17:00');
+    const notice = renderDeadlineReminder({
+      ...base,
+      confirmed: {
+        confirmedText,
+        projection: { projectedLines: [lines[0]!], lostLines: [`${lines[1]} — ületab teie piirmäära`] },
+      },
+    });
+    expect(notice.title).toBe('Meeldetuletus: voor VOOR-2026-001 sulgub 15.09.2026 17:00');
     expect(notice.body).toContain('prognoositakse teile 1 koolitust');
     expect(notice.body).toContain('läheksid mujale');
     expect(notice.body.match(/^· /gm)).toHaveLength(2);
@@ -108,9 +115,19 @@ describe('[D-11] the final summary', () => {
   });
 
   it('says so when nothing is projected, and leaves the lost block out when nothing is lost', () => {
-    const notice = renderFinalSummary({ ...base, projectedLines: [], lostLines: [] });
+    const notice = renderDeadlineReminder({
+      ...base,
+      confirmed: { confirmedText, projection: { projectedLines: [], lostLines: [] } },
+    });
     expect(notice.body).toContain('ei prognoosita teile sellest voorust ühtegi koolitust');
     expect(notice.body).not.toContain('läheksid mujale');
     expect(notice.bodyHtml).not.toContain('<ul');
+  });
+
+  it('tells a partner who has not confirmed what silence means', () => {
+    const notice = renderDeadlineReminder({ ...base, unconfirmedChanges: true, confirmed: null });
+    expect(notice.body).toContain('Te ei ole oma valikut veel kinnitanud');
+    expect(notice.body).toContain('kinnitamata');
+    expect(notice.body).toContain('loetakse, et loobute selle vooru koolituste pakkumisest');
   });
 });

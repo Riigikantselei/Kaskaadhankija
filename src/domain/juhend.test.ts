@@ -16,7 +16,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CODE_TTL_MS, SESSION_TTL_MS } from '@/server/auth/codes';
-import { FINAL_SUMMARY_WINDOW_MS } from '@/server/rounds/engine';
 import { LISA_B1_EXPECTED, LISA_B2_EXPECTED } from './__fixtures__/lisa-b';
 import {
   FIGURE_IDS,
@@ -26,7 +25,6 @@ import {
   JOONISTE_TEKST,
   KASKAAD,
   KOODI_KEHTIVUS_MIN,
-  LOPPKOKKUVOTE_TUNDE,
   PEALKIRI,
   QUOTED,
   SECTIONS,
@@ -111,13 +109,11 @@ describe('the guide states no number it has no right to promise', () => {
     expect(proosa).not.toContain(needle);
   });
 
-  it('pins the only three numbers it does state to the code', () => {
+  it('pins the only two numbers it does state to the code', () => {
     expect(KOODI_KEHTIVUS_MIN).toBe(CODE_TTL_MS / 60_000);
     expect(SESSIOONI_KEHTIVUS_PAEVI).toBe(SESSION_TTL_MS / 86_400_000);
-    expect(LOPPKOKKUVOTE_TUNDE).toBe(FINAL_SUMMARY_WINDOW_MS / 3_600_000);
     expect(proosa).toContain(`${KOODI_KEHTIVUS_MIN} minutit`);
     expect(proosa).toContain(`${SESSIOONI_KEHTIVUS_PAEVI} päeva`);
-    expect(proosa).toContain(`${LOPPKOKKUVOTE_TUNDE} tundi enne tähtaega`);
   });
 });
 

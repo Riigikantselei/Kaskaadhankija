@@ -38,6 +38,7 @@ import type {
 } from '../domain/round-statuses';
 import type { County, OrderLanguage, WorkshopType } from '../domain/statuses';
 import type { DateKind, RoundKind } from '../domain/clusters';
+import type { ReminderMode } from '../domain/reminder';
 import type { AllocationInput, AllocationResult, CapKind } from '../domain/allocate';
 
 const uuid = () => text().$defaultFn(() => crypto.randomUUID());
@@ -110,6 +111,14 @@ export const lots = sqliteTable(
     responseDeadlineWorkingDays: integer('response_deadline_working_days').notNull().default(3),
     /** [V-03] Tallinn wall-clock time the deadline falls at, 'HH:MM' */
     deadlineLocalTime: text('deadline_local_time').notNull().default('17:00'),
+    /**
+     * [D-05] The lot's default moment for the round's one reminder: whole
+     * hours before the deadline, or a Tallinn time of day. A round may
+     * override it at publication. Validated in code, like `defaultCapOptions`.
+     */
+    reminderMode: text('reminder_mode').$type<ReminderMode>().notNull().default('hours_before'),
+    reminderHoursBefore: integer('reminder_hours_before').notNull().default(4),
+    reminderLocalTime: text('reminder_local_time').notNull().default('10:00'),
     /** [T-07][L-09] how long the buyer expects to take over the review */
     reviewWorkingDays: integer('review_working_days').notNull().default(2),
     /** [T-03] warning level only — never acts on its own */
@@ -375,6 +384,15 @@ export const rounds = sqliteTable(
     note: text().notNull().default(''),
     publishedAt: integer('published_at'),
     deadlineAt: integer('deadline_at'),
+    /**
+     * [D-05] When the one reminder goes out, and the rule it came from (so an
+     * extension can move it). Null: no reminder in this round — a test round
+     * too short for one, or a round from before the rule existed.
+     */
+    reminderAt: integer('reminder_at'),
+    reminderMode: text('reminder_mode').$type<ReminderMode>(),
+    reminderHoursBefore: integer('reminder_hours_before'),
+    reminderLocalTime: text('reminder_local_time'),
     /** [T-07] when partners are told to expect the decision */
     expectedDecisionAt: integer('expected_decision_at'),
     closedAt: integer('closed_at'),

@@ -10,6 +10,8 @@
  */
 
 import { ActionButton, ActionForm, Disclosure } from '@/components/action-form';
+import { ReminderFields } from '@/components/reminder-fields';
+import type { ReminderRule } from '@/domain/reminder';
 import {
   cancelRoundAction,
   extendDeadlineAction,
@@ -40,6 +42,7 @@ export function DraftRoundPanel({
   plannedExtraWorkingDays = 0,
   plannedDeadlineLocal = null,
   testFloorSeconds,
+  reminder,
   trainings,
 }: {
   roundId: string;
@@ -56,6 +59,8 @@ export function DraftRoundPanel({
    * the browser suites shorten it. Undefined means production rules.
    */
   testFloorSeconds?: number;
+  /** [D-05] the lot's default reminder, offered for this round */
+  reminder: ReminderRule;
   trainings: TrainingRef[];
 }) {
   const extraChoices = [...new Set([0, 1, 2, 5, plannedExtraWorkingDays])].sort((a, b) => a - b);
@@ -132,6 +137,16 @@ export function DraftRoundPanel({
                 <option value="sealed">Suletud</option>
               </select>
             </label>
+            <div className="sm:col-span-2">
+              <ReminderFields
+                initial={reminder}
+                hint={
+                  testFloorSeconds !== undefined
+                    ? 'Voor saadab partnerile kolm kirja: pakkumise, selle meeldetuletuse ja tulemuse tähtajal. Testkeskkonnas jääb hankeosa vaikimisi meeldetuletus lühikeses voorus lihtsalt ära.'
+                    : undefined
+                }
+              />
+            </div>
           </div>
         </ActionForm>
       </div>

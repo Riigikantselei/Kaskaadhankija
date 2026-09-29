@@ -314,6 +314,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   decline_receipt: 'Loobumise kviitung',
   projection_changed: 'Prognoos muutus',
   reminder_24h: 'Meeldetuletus',
+  /** [D-11] retired: folded into the one reminder; older rounds still carry it */
   reminder_final: 'Lõppkokkuvõte',
   round_changed: 'Vooru muudatus',
   round_cancelled: 'Voor tühistatud',
@@ -356,7 +357,7 @@ export const NOTICE_CATEGORY: Record<NotificationType, NoticeCategory> = {
 };
 
 /** The informational notices, named for a reader [L-27]. */
-export const INFORMATIONAL_NOTICES_TEXT = 'kinnituste ja loobumiste kviitungid, prognoosi muutused ja lõppkokkuvõte';
+export const INFORMATIONAL_NOTICES_TEXT = 'kinnituste ja loobumiste kviitungid';
 
 /** A partner representative's role [R-02]. */
 export const REPRESENTATIVE_ROLE_LABELS: Record<string, string> = {

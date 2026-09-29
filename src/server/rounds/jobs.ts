@@ -1,6 +1,6 @@
 /**
- * Deadline-driven work: close rounds whose window has passed, send the 24-hour
- * reminders and the two-hour summaries, and retry e-mails that failed to send.
+ * Deadline-driven work: close rounds whose window has passed, send each round's
+ * one reminder when it falls due [D-05], and retry e-mails that failed to send.
  *
  * Called from three places, all of which must be safe to overlap:
  *   - the in-process timer started at boot (every minute);
@@ -9,8 +9,7 @@
  *
  * Each round is handled in its own immediate transaction with a status
  * re-check, so the work is idempotent however many callers race. Closing runs
- * before reminders and summaries, so a round that has just closed never also
- * gets either.
+ * before reminders, so a round that has just closed never also gets one.
  */
 
 import { and, eq, isNotNull, lte } from 'drizzle-orm';
@@ -20,17 +19,14 @@ import { currentTimeMs, markJobsRun } from '../clock';
 import { DEADLINE_ACTOR, NO_EVIDENCE, type Ctx, type Db, type QueuedNotification } from '../context';
 import { purgeAuthRows } from '../auth/codes';
 import { dispatchOutbox, retryFailedDeliveries } from '../notify';
-import { FINAL_SUMMARY_WINDOW_MS, closeRound, sendDeadlineReminder, sendFinalSummary } from './engine';
+import { closeRound, sendDeadlineReminder } from './engine';
 
 export interface JobsReport {
   /** codes of rounds closed by this run */
   closed: string[];
   remindersSent: number;
   /** [D-11] personal summaries sent inside the final two hours */
-  finalSummariesSent: number;
 }
-
-const REMINDER_WINDOW_MS = 86_400_000;
 
 /**
  * Run everything the passage of time makes due.
@@ -41,7 +37,7 @@ const REMINDER_WINDOW_MS = 86_400_000;
  */
 export function runDueJobs(database?: Db): JobsReport {
   const db = database ?? getDb();
-  const report: JobsReport = { closed: [], remindersSent: 0, finalSummariesSent: 0 };
+  const report: JobsReport = { closed: [], remindersSent: 0 };
   const outbox: QueuedNotification[] = [];
 
   const nowMs = currentTimeMs();
@@ -76,15 +72,15 @@ export function runDueJobs(database?: Db): JobsReport {
     }
   }
 
-  /* 2. remind the partners of rounds inside the final 24 hours */
+  /* 2. the one reminder, at the moment the buyer chose [D-05] */
   const closing = db
     .select({ id: rounds.id })
     .from(rounds)
     .where(
       and(
         eq(rounds.status, 'open'),
-        isNotNull(rounds.deadlineAt),
-        lte(rounds.deadlineAt, nowMs + REMINDER_WINDOW_MS),
+        isNotNull(rounds.reminderAt),
+        lte(rounds.reminderAt, nowMs),
       ),
     )
     .all();
@@ -109,40 +105,7 @@ export function runDueJobs(database?: Db): JobsReport {
     }
   }
 
-  /* 3. the personal summary inside the final two hours [D-11] */
-  const ending = db
-    .select({ id: rounds.id })
-    .from(rounds)
-    .where(
-      and(
-        eq(rounds.status, 'open'),
-        isNotNull(rounds.deadlineAt),
-        lte(rounds.deadlineAt, nowMs + FINAL_SUMMARY_WINDOW_MS),
-      ),
-    )
-    .all();
-
-  for (const row of ending) {
-    try {
-      report.finalSummariesSent += db.transaction(
-        (tx) => {
-          const ctx: Ctx = {
-            tx,
-            at: currentTimeMs(),
-            actor: DEADLINE_ACTOR,
-            evidence: NO_EVIDENCE,
-            outbox,
-          };
-          return sendFinalSummary(ctx, row.id);
-        },
-        { behavior: 'immediate' },
-      );
-    } catch (error) {
-      console.error(`[kaskaadhankija] lõppkokkuvõtte saatmine ebaõnnestus (${row.id})`, error);
-    }
-  }
-
-  if (report.closed.length > 0 || report.remindersSent > 0 || report.finalSummariesSent > 0) {
+  if (report.closed.length > 0 || report.remindersSent > 0) {
     try {
       db.transaction(
         (tx) => {

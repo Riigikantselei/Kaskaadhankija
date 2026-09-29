@@ -52,7 +52,15 @@ import { CAP_KIND_LABELS, allowedCapKinds, type CapOptions,
 } from '@/domain/round-statuses';
 import { orderDisplayNumber, WORKSHOP_TYPE_LABELS } from '@/domain/statuses';
 import { allocationMaxPriceEur, priceLine } from '@/domain/pricing';
-import { addWorkingDays } from '@/domain/working-days';
+import { addWorkingDays, responseDeadline } from '@/domain/working-days';
+import {
+  MIN_REMINDER_GAP_MS,
+  describeReminderRule,
+  reminderFits,
+  reminderInstant,
+  reminderRuleProblem,
+  type ReminderRule,
+} from '@/domain/reminder';
 import {
   formatDateTime,
   formatDateTimeShort,
@@ -71,11 +79,12 @@ import {
   renderLateActionRejected,
   renderOrderIssued,
   renderParticipantExcluded,
-  renderFinalSummary,
   renderProjectionChanged,
   renderRoundCancelled,
   renderRoundChanged,
   renderRoundPublished,
+  type ReminderConfirmed,
+  type ReminderProjection,
 } from '@/domain/round-templates';
 import { env, isDemoMode } from '@/lib/env';
 import { logAudit } from '../audit';
@@ -247,9 +256,41 @@ function nextSequence(ctx: Ctx, table: typeof roundSequences | typeof orderSeque
   return row?.lastSeq ?? 1;
 }
 
-/** The default response deadline for a lot, from the working-day calendar. */
+/**
+ * The default response deadline for a lot, from the working-day calendar —
+ * never less than 24 hours after publication [V-03].
+ */
 export function computeDefaultDeadline(lot: Lot, at: number): number {
-  return addWorkingDays(new Date(at), lot.responseDeadlineWorkingDays, lot.deadlineLocalTime).getTime();
+  return responseDeadline(new Date(at), lot.responseDeadlineWorkingDays, lot.deadlineLocalTime).getTime();
+}
+
+/** [D-05] The lot's default reminder rule. */
+export function lotReminderRule(lot: Pick<Lot, 'reminderMode' | 'reminderHoursBefore' | 'reminderLocalTime'>): ReminderRule {
+  return { mode: lot.reminderMode, hoursBefore: lot.reminderHoursBefore, localTime: lot.reminderLocalTime };
+}
+
+function sameReminderRule(a: ReminderRule, b: ReminderRule): boolean {
+  return a.mode === b.mode && (a.mode === 'hours_before' ? a.hoursBefore === b.hoursBefore : a.localTime === b.localTime);
+}
+
+/** [D-05] The rule a round was published with, or null for a round from before rules. */
+function roundReminderRule(round: Round): ReminderRule | null {
+  if (round.reminderMode === null) return null;
+  return {
+    mode: round.reminderMode,
+    hoursBefore: round.reminderHoursBefore ?? 0,
+    localTime: round.reminderLocalTime ?? '',
+  };
+}
+
+/**
+ * In the test environment a round may last minutes [L-23]; a reminder there
+ * only has to come after the offer, not two hours after it.
+ */
+const TEST_REMINDER_GAP_MS = 60_000;
+
+function reminderGapMs(): number {
+  return isDemoMode ? TEST_REMINDER_GAP_MS : MIN_REMINDER_GAP_MS;
 }
 
 function computeDecisionDeadline(lot: Lot, deadlineAt: number): number {
@@ -391,6 +432,12 @@ export interface PublishRoundInput {
    */
   extraWorkingDays?: number;
   visibilityMode?: VisibilityMode;
+  /**
+   * [D-05] When the reminder goes out, overriding the lot's default. A rule
+   * the buyer chose must fit the round; the lot default that does not fit
+   * (a short test round) simply means no reminder.
+   */
+  reminder?: ReminderRule;
 }
 
 /**
@@ -455,6 +502,25 @@ export function publishRound(ctx: Ctx, roundId: string, input: PublishRoundInput
   const visibilityMode = input.visibilityMode ?? round.visibilityMode;
   const expectedDecisionAt = computeDecisionDeadline(lot, deadlineAt);
 
+  // [D-05] the one reminder, placed by the buyer's rule
+  // A form always submits a rule; the lot's own is still "the default".
+  const lotRule = lotReminderRule(lot);
+  const chosen = input.reminder && !sameReminderRule(input.reminder, lotRule) ? input.reminder : undefined;
+  const reminderRule = chosen ?? lotRule;
+  const ruleProblem = reminderRuleProblem(reminderRule);
+  if (ruleProblem) throw new Error(ruleProblem);
+  let reminderAt: number | null = reminderInstant(reminderRule, deadlineAt);
+  if (!reminderFits(reminderAt, ctx.at, deadlineAt, reminderGapMs())) {
+    if (chosen) {
+      throw new Error(
+        `Meeldetuletus (${describeReminderRule(reminderRule)}, ${formatDateTimeShort(reminderAt)}) peab jääma avaldamise ja tähtaja vahele${
+          isDemoMode ? '' : ' ning tulema vähemalt kaks tundi pärast avaldamist'
+        }.`,
+      );
+    }
+    reminderAt = null;
+  }
+
   ctx.tx
     .update(rounds)
     .set({
@@ -463,6 +529,10 @@ export function publishRound(ctx: Ctx, roundId: string, input: PublishRoundInput
       publishedAt: ctx.at,
       deadlineAt,
       expectedDecisionAt,
+      reminderAt,
+      reminderMode: reminderRule.mode,
+      reminderHoursBefore: reminderRule.hoursBefore,
+      reminderLocalTime: reminderRule.localTime,
       // [V-03] freeze the config this round runs under
       workloadThresholdSnapshot: lot.workloadThreshold,
       responseWorkingDaysSnapshot: lot.responseDeadlineWorkingDays,
@@ -535,7 +605,7 @@ export function publishRound(ctx: Ctx, roundId: string, input: PublishRoundInput
 
   logAudit(ctx, {
     eventType: 'round.published',
-    summary: `Voor ${round.code} avaldatud kõigile hankeosa ${lot.code} partneritele (${members.length}), vastamistähtaeg ${formatDateTimeShort(deadlineAt)}`,
+    summary: `Voor ${round.code} avaldatud kõigile hankeosa ${lot.code} partneritele (${members.length}), vastamistähtaeg ${formatDateTimeShort(deadlineAt)}, meeldetuletus ${reminderAt === null ? 'puudub' : formatDateTimeShort(reminderAt)}`,
     roundId,
     lotId: lot.id,
     after: {
@@ -918,9 +988,9 @@ const PROJECTION_NOTICE_INTERVAL_MS = 4 * 3_600_000;
 /**
  * [D-04] Notify partners whose projected count moved, rate-limited.
  *
- * Suppressed in the final 24 hours, where the reminder [D-05] carries the
- * current position instead — otherwise a flurry of late revisions would spam
- * everyone at exactly the moment they are deciding.
+ * In the app only, never by e-mail: a round mails a partner three times — the
+ * offer, the reminder [D-05], the result [D-12] — and the reminder is where the
+ * current position arrives in the inbox. The round page shows it live anyway.
  *
  * The partner who just acted is skipped: their own projection did move, but the
  * [D-02] receipt they are already being sent states it. Two messages for one
@@ -936,7 +1006,6 @@ function notifyProjectionChanges(
   const round = loadRound(ctx, roundId);
   const lot = loadLot(ctx, round.lotId);
   const current = projectionCounts(ctx, roundId);
-  const inFinalDay = round.deadlineAt !== null && round.deadlineAt - ctx.at <= 86_400_000;
 
   for (const participant of participantsOf(ctx.tx, roundId)) {
     if (participant.excludedAt !== null) continue;
@@ -951,7 +1020,6 @@ function notifyProjectionChanges(
       .where(eq(roundParticipants.id, participant.id))
       .run();
 
-    if (inFinalDay) continue;
     const lastNotified = participant.lastProjectionNotifiedAt ?? 0;
     if (ctx.at - lastNotified < PROJECTION_NOTICE_INTERVAL_MS) continue;
 
@@ -966,7 +1034,6 @@ function notifyProjectionChanges(
       recipientLotPartnerId: participant.lotPartnerId,
       type: 'projection_changed',
       roundId,
-      emailTo: partnerRecipients(ctx.tx, participant.lotPartnerId, 'projection_changed'),
       notice: renderProjectionChanged({
         framework: frameworkIdentity(ctx.tx),
         roundCode: round.code,
@@ -1018,9 +1085,20 @@ export function extendDeadline(ctx: Ctx, roundId: string, newDeadlineAt: number,
   const lot = loadLot(ctx, round.lotId);
   const expectedDecisionAt = computeDecisionDeadline(lot, newDeadlineAt);
 
+  // [D-05] A reminder still to come follows the deadline; one already due or
+  // sent stays where it was.
+  let reminderAt = round.reminderAt;
+  const rule = roundReminderRule(round);
+  const reminderSent = participantsOf(ctx.tx, roundId).some((p) => p.reminderSentAt !== null);
+  if (rule && round.publishedAt !== null && !reminderSent) {
+    const moved = reminderInstant(rule, newDeadlineAt);
+    reminderAt =
+      moved > ctx.at && reminderFits(moved, round.publishedAt, newDeadlineAt, reminderGapMs()) ? moved : null;
+  }
+
   ctx.tx
     .update(rounds)
-    .set({ deadlineAt: newDeadlineAt, expectedDecisionAt })
+    .set({ deadlineAt: newDeadlineAt, expectedDecisionAt, reminderAt })
     .where(eq(rounds.id, roundId))
     .run();
 
@@ -1303,31 +1381,67 @@ export function closeRound(ctx: Ctx, roundId: string): { closed: boolean; code: 
   return { closed: true, code: round.code };
 }
 
-/** [D-05] The reminder 24 hours before a deadline. */
+/**
+ * [D-05] The round's one reminder, due at `rounds.reminder_at`. Every partner
+ * gets it once, worded by where they stand; a partner who has explicitly
+ * declined does not — their outcome is settled.
+ *
+ * It absorbs the old two-hour final summary [D-11]: a confirmer's reminder
+ * carries what they confirmed, what the projection gives them now and which of
+ * their marks would go elsewhere and why [N-03]. Sealed rounds have no
+ * projection to show [N-06].
+ */
 export function sendDeadlineReminder(ctx: Ctx, roundId: string): number {
   const round = loadRound(ctx, roundId);
   if (round.status !== 'open' || round.deadlineAt === null) return 0;
   const lot = loadLot(ctx, round.lotId);
-  const counts = projectionCounts(ctx, roundId);
+  const input = round.visibilityMode === 'dynamic' ? projectionInput(ctx.tx, roundId, ctx.at) : null;
 
   let sent = 0;
   for (const participant of participantsOf(ctx.tx, roundId)) {
     if (participant.excludedAt !== null || participant.reminderSentAt !== null) continue;
-
-    const latest = latestConfirmation(ctx.tx, roundId, participant.lotPartnerId);
-    const projected = counts.get(participant.lotPartnerId) ?? 0;
-
-    const statusText = !latest
-      ? 'Te ei ole veel oma valikut kinnitanud.'
-      : latest.kind === 'decline_all'
-        ? 'Olete loobunud vooru koolitustest.'
-        : `Teie kinnitatud valik sisaldab ${unitCount(round.kind, latest.marks.length)}.`;
 
     ctx.tx
       .update(roundParticipants)
       .set({ reminderSentAt: ctx.at })
       .where(eq(roundParticipants.id, participant.id))
       .run();
+
+    const latest = latestConfirmation(ctx.tx, roundId, participant.lotPartnerId);
+    const state = responseStateFor(
+      latest,
+      participant.draftMarks,
+      participant.draftCap,
+      participant.draftCapKind,
+    );
+    if (state === 'declined_all') continue;
+
+    let confirmed: ReminderConfirmed | null = null;
+    if (latest && latest.kind === 'confirm') {
+      const capKind = latest.capKind ?? 'trainings';
+      let projection: ReminderProjection | null = null;
+      if (input) {
+        const view = partnerView(input, participant.lotPartnerId, {
+          marks: latest.marks,
+          cap: latest.cap,
+          capKind,
+        });
+        const reasons = new Map(
+          view.rows
+            .filter((row) => row.state === 'marked_not_projected')
+            .map((row) => [row.trainingId, row.reason] as const),
+        );
+        projection = {
+          projectedLines: trainingLines(ctx, view.projectedTrainingIds, roundId),
+          lostLines: lostLinesWithReasons(ctx, roundId, reasons),
+          projectedCount: view.projectedCount,
+        };
+      }
+      confirmed = {
+        confirmedText: `Teie kinnitatud valik (${formatDateTimeShort(latest.confirmedAt)}): ${unitCount(round.kind, latest.marks.length)}${capSummary(latest.cap, capKind, round.kind)}.`,
+        projection,
+      };
+    }
 
     notify(ctx, {
       recipientKind: 'partner',
@@ -1342,81 +1456,9 @@ export function sendDeadlineReminder(ctx: Ctx, roundId: string): number {
         deadlineText: formatDateTime(round.deadlineAt),
         url: partnerUrl(roundId),
         contactName: participant.contactName,
-        statusText,
-        projectionText:
-          round.visibilityMode === 'dynamic'
-            ? `Praeguse seisuga on teile prognoositud ${unitCount(round.kind, projected)} (${formatRemaining(ctx.at, round.deadlineAt)}).`
-            : 'Jaotus selgub pärast vastamistähtaega.',
-      }),
-    });
-    sent += 1;
-  }
-  return sent;
-}
-
-/** [D-11] How long before the deadline the personal summary goes out [L-24]. */
-export const FINAL_SUMMARY_WINDOW_MS = 2 * 3_600_000;
-
-/**
- * [D-11] The personal summary two hours before the deadline: to every partner
- * who has confirmed, once — what they confirmed, what the projection gives them
- * right now, and which of their marks would go elsewhere and why [N-03].
- *
- * Only confirmers: a decliner's outcome is settled, and a non-responder was
- * told at 24 hours [D-05] that silence counts as declining. A confirmation
- * made inside the window is skipped — its receipt [D-02] already carries this
- * position, and two messages for one state teach a reader to skip both. Sealed
- * rounds have no projection to summarise [N-06]. No rate limit is needed: the
- * round is quiet in its last day [D-04], so this is the one message.
- *
- * The participant is stamped before the skip check, so a partner whose only
- * confirmation falls inside the window is never revisited by a later run.
- */
-export function sendFinalSummary(ctx: Ctx, roundId: string): number {
-  const round = loadRound(ctx, roundId);
-  if (round.status !== 'open' || round.deadlineAt === null || round.visibilityMode !== 'dynamic') return 0;
-  if (round.deadlineAt - ctx.at > FINAL_SUMMARY_WINDOW_MS) return 0;
-  const lot = loadLot(ctx, round.lotId);
-  const input = projectionInput(ctx.tx, roundId, ctx.at);
-
-  let sent = 0;
-  for (const participant of participantsOf(ctx.tx, roundId)) {
-    if (participant.excludedAt !== null || participant.finalReminderSentAt !== null) continue;
-    const latest = latestConfirmation(ctx.tx, roundId, participant.lotPartnerId);
-    if (!latest || latest.kind !== 'confirm') continue;
-
-    ctx.tx
-      .update(roundParticipants)
-      .set({ finalReminderSentAt: ctx.at })
-      .where(eq(roundParticipants.id, participant.id))
-      .run();
-    if (round.deadlineAt - latest.confirmedAt <= FINAL_SUMMARY_WINDOW_MS) continue;
-
-    const capKind = latest.capKind ?? 'trainings';
-    const view = partnerView(input, participant.lotPartnerId, { marks: latest.marks, cap: latest.cap, capKind });
-    const reasons = new Map(
-      view.rows.filter((row) => row.state === 'marked_not_projected').map((row) => [row.trainingId, row.reason] as const),
-    );
-    const lostLines = lostLinesWithReasons(ctx, roundId, reasons);
-
-    notify(ctx, {
-      recipientKind: 'partner',
-      recipientLotPartnerId: participant.lotPartnerId,
-      type: 'reminder_final',
-      roundId,
-      emailTo: partnerRecipients(ctx.tx, participant.lotPartnerId, 'reminder_final'),
-      notice: renderFinalSummary({
-        framework: frameworkIdentity(ctx.tx),
-        roundCode: round.code,
-        lotLabel: lotLabel(lot),
-        deadlineText: formatDateTime(round.deadlineAt),
-        url: partnerUrl(roundId),
-        contactName: participant.contactName,
         remainingText: formatRemaining(ctx.at, round.deadlineAt),
-        confirmedText: `Teie kinnitatud valik (${formatDateTimeShort(latest.confirmedAt)}): ${unitCount(round.kind, latest.marks.length)}${capSummary(latest.cap, capKind, round.kind)}.`,
-        projectedLines: trainingLines(ctx, view.projectedTrainingIds, roundId),
-        projectedCount: view.projectedCount,
-        lostLines,
+        unconfirmedChanges: state === 'unconfirmed_changes' || state === 'draft_only',
+        confirmed,
         unit: UNIT_WORDS[round.kind],
       }),
     });
