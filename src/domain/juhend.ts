@@ -528,6 +528,11 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'para',
         text:
+          'Kui esindate sama aadressiga **mitut ettevõtet**, küsib süsteem pärast sisselogimist, kelle nimel tegutsete. Ettevõtet saab hiljem vahetada menüüst **„Vaheta ettevõtet“** — uut koodi selleks vaja ei ole. Voorud, kinnitused ja teated on iga ettevõtte kohta eraldi.',
+      },
+      {
+        kind: 'para',
+        text:
           'Kui kood ei sobi või on aegunud, ütleb leht seda ja saate uue küsida — nupp „Küsi uus kood“. Viie vale katse järel lõpetab kood kehtivuse ja tuleb küsida uus. Turvalisuse huvides ei ütle leht kunagi, kas mingi aadress on loendis või ei ole: vastus on mõlemal juhul ühesugune.',
       },
       { kind: 'figure', id: 'sisene-viga', caption: 'Vale või aegunud kood — küsige uus.' },

@@ -257,21 +257,8 @@ export function representativeCollision(
     .get();
   if (buyer) return 'see aadress kuulub tellimismeeskonna kasutajale ja ei saa olla partneri esindaja';
 
-  const elsewhere = tx
-    .select({ partnerName: partners.name })
-    .from(partnerRepresentatives)
-    .innerJoin(partners, eq(partners.id, partnerRepresentatives.partnerId))
-    .where(
-      and(
-        eq(partnerRepresentatives.email, email),
-        eq(partnerRepresentatives.isActive, true),
-        ne(partnerRepresentatives.partnerId, partnerId),
-      ),
-    )
-    .get();
-  if (elsewhere) {
-    return `see aadress on juba aktiivne partneri ${elsewhere.partnerName} esindajana — lõpeta see esindus enne`;
-  }
+  // An address may represent several companies — one person, two firms. The
+  // sign-in then asks which company to act for [L-08].
   return null;
 }
 

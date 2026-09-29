@@ -2,6 +2,7 @@ import { inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { orders } from '@/db/schema';
 import { requirePartner } from '@/server/auth/actor';
+import { activeCompaniesForEmail } from '@/server/auth/codes';
 import { AppNav } from '@/components/app-nav';
 import { TestStrip } from '@/components/test-strip';
 
@@ -19,6 +20,10 @@ export default async function PartnerLayout({ children }: { children: React.Reac
       .where(inArray(orders.lotPartnerId, actor.lotPartnerIds))
       .limit(1)
       .all().length > 0;
+  // [L-08] One person may represent several companies from one address.
+  const otherCompanies = actor.representativeId
+    ? activeCompaniesForEmail(getDb(), actor.contactEmail).length > 1
+    : false;
 
   return (
     <>
@@ -32,6 +37,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
           { href: '/partner/kalender', label: 'Kalender' },
           ...(hasOrders ? [{ href: '/partner/tellimused', label: 'Tellimused' }] : []),
           { href: '/partner/teavitused', label: 'Teavitused' },
+          ...(otherCompanies ? [{ href: '/partner/ettevote', label: 'Vaheta ettevõtet' }] : []),
           // Public, and outside this shell — but a partner who has signed in
           // should not have to go back to the sign-in page to find it.
           { href: '/juhend', label: 'Juhend' },

@@ -184,7 +184,7 @@ describe('representatives import', () => {
     expect(activeFor('10000002')).toHaveLength(1);
   });
 
-  it('refuses an address that is active for another company', () => {
+  it('accepts an address that is active for another company — one person, two firms [L-08]', () => {
     importRows([rep()]);
     const preview = harness.write((ctx) =>
       previewRepresentativesImport(ctx, {
@@ -195,8 +195,11 @@ describe('representatives import', () => {
         options: { deactivateMissing: false },
       }),
     );
-    expect(preview.summary.valid).toBe(0);
-    expect(preview.rows[0]?.errors[0]?.message).toMatch(/juba aktiivne partneri Tehisaru Koolitus OÜ/);
+    expect(preview.summary.valid).toBe(1);
+    harness.write((ctx) => applyRepresentativesImport(ctx, preview.batchId));
+    const email = rep().e_post;
+    expect(activeFor('10000001').map((r) => r.email)).toContain(email);
+    expect(activeFor('10000002').map((r) => r.email)).toContain(email);
   });
 
   it('refuses a buyer-team address', () => {

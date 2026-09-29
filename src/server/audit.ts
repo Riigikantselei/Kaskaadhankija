@@ -77,6 +77,7 @@ export type AuditEventType =
   | 'login.failed'
   | 'login.locked'
   | 'login.signed_out'
+  | 'login.company_switched'
   // imports
   | 'import.previewed'
   | 'import.trainings_imported'

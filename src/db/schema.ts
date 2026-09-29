@@ -217,7 +217,7 @@ export const partnerRepresentatives = sqliteTable(
       .notNull()
       .references(() => partners.id),
     name: text().notNull(),
-    /** lowercased; unique among active representatives */
+    /** lowercased; unique among a company's active representatives */
     email: text().notNull(),
     role: text().$type<RepresentativeRole>().notNull().default('esindaja'),
     /**
@@ -253,10 +253,12 @@ export const partnerRepresentatives = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => [
-    // One person signs in as one company: an address is active for at most one.
-    uniqueIndex('partner_representatives_email_active_unique')
-      .on(t.email)
+    // An address is active at most once per company. One person may represent
+    // several companies; the sign-in asks which one to act for [L-08].
+    uniqueIndex('partner_representatives_partner_email_active_unique')
+      .on(t.partnerId, t.email)
       .where(sql`is_active = 1`),
+    index('partner_representatives_email_idx').on(t.email),
     index('partner_representatives_partner_idx').on(t.partnerId),
     oneOf('role', ['esindaja', 'asendaja']),
   ],
