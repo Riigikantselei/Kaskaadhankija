@@ -182,7 +182,7 @@ export default async function TrainingsPage({
                 <th className="kh-th">Toimumine</th>
                 <th className="kh-th">Maakond</th>
                 <th className="kh-th">Sihtrühm</th>
-                <th className="kh-th">{HIND.maxOsalejaid}</th>
+                <th className="kh-th">{HIND.osalejateArv}</th>
                 <th className="kh-th">Keel</th>
                 <th className="kh-th">{HIND.tellijaHinnang}</th>
                 <th className="kh-th">Olek</th>

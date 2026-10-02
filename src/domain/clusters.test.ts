@@ -98,7 +98,7 @@ describe('describing a cluster', () => {
   });
 
   it('describes the whole cluster and a partner’s share of it', () => {
-    expect(describeGroups(groups, groups)).toBe('10 rühma × kuni 50 osalejat (480 kokku)');
-    expect(describeGroups(groups.slice(4), groups)).toBe('6 rühma (05–10) × kuni 50 osalejat (280 kokku)');
+    expect(describeGroups(groups, groups)).toBe('10 rühma × 50 osalejat (480 kokku)');
+    expect(describeGroups(groups.slice(4), groups)).toBe('6 rühma (05–10) × 50 osalejat (280 kokku)');
   });
 });

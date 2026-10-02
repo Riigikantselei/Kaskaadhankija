@@ -465,7 +465,7 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'list',
         items: [
-          `**Hind:** tabelis on veerud „${HIND.maxOsalejaid}“ ja „${HIND.ruhmaTaitumisel}“ ning päises teie „${HIND.osalejaKohta}“ — ainult teie enda hind; tellija hinnangut ega teiste partnerite hindu ei näidata.`,
+          `**Hind:** tabelis on veerud „${HIND.osalejateArv}“ ja „${HIND.hindOodatavaArvuga}“ ning päises teie „${HIND.osalejaKohta}“ — ainult teie enda hind; tellija hinnangut ega teiste partnerite hindu ei näidata.`,
           '**Kinnitamine:** vastus on lehe ülaosas plokis „Teie vastus“; sama valiku uuesti kinnitamine ei loo uut kannet ega kviitungit. Telefonis püsivad nupud ekraani allservas.',
           `**Seis uueneb ise** umbes iga ${AUTO_REFRESH_MS / 60_000} minuti järel, kuni voor on avatud; prognoosi kõrval on seisu aeg.`,
           '**Märkimine:** nupud „Märgi kõik saadaval“, „Märgi kõik“ ja „Tühjenda“; ülempiir on sõnaselge valik „Piirmäära ei ole“ või „Kuni“.',
@@ -586,11 +586,11 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'para',
         text:
-          `Vooru avades näete tabelit **„Vooru koolitused“**: koodi, nimetuse, toimumisaja, asukoha, veeru „${HIND.maxOsalejaid}“, keele ja veeru „${HIND.ruhmaTaitumisel}“. Märkige linnukesega need, mida olete valmis läbi viima.`,
+          `Vooru avades näete tabelit **„Vooru koolitused“**: koodi, nimetuse, toimumisaja, asukoha, veeru „${HIND.osalejateArv}“, keele ja veeru „${HIND.hindOodatavaArvuga}“. Märkige linnukesega need, mida olete valmis läbi viima.`,
       },
       {
         kind: 'para',
-        text: `Tabeli päises seisab teie **„${HIND.osalejaKohta}“** — teie raamlepingu hind selles hankeosas, **see, mille pakkusite hankes**, üks number kogu vooru peale. Voorus seda hinda ei määrata ega muudeta; kui number ei vasta teie pakkumisele, võtke ühendust tellijaga. „${HIND.ruhmaTaitumisel}“ on see korrutatud koolituse maksimaalse osalejate arvuga: nii palju maksaks koolitus, kui rühm täitub. Osalejate arv on ülempiir, mitte lubadus. Teiste partnerite hindu te ei näe.`,
+        text: `Tabeli päises seisab teie **„${HIND.osalejaKohta}“** — teie raamlepingu hind selles hankeosas, **see, mille pakkusite hankes**, üks number kogu vooru peale. Voorus seda hinda ei määrata ega muudeta; kui number ei vasta teie pakkumisele, võtke ühendust tellijaga. „${HIND.hindOodatavaArvuga}“ on see korrutatud koolituse maksimaalse osalejate arvuga: nii palju maksaks koolitus, kui rühm täitub. Osalejate arv on ülempiir, mitte lubadus. Teiste partnerite hindu te ei näe.`,
       },
       {
         kind: 'para',
@@ -682,7 +682,7 @@ export const SECTIONS: readonly Section[] = [
       {
         kind: 'para',
         text:
-          'Mõnikord tellib tellija **mahu**, mitte kindla kuupäevaga koolituse: näiteks 500 osalejat ühes maakonnas perioodi jooksul. Sellise vooru lehel on pealkirja kõrval märgis **„Klastrivoor“** ja tabeli asemel on kaardid **„Vooru klastrid“**. Klaster on jagatud **rühmadeks** (nt 10 rühma × kuni 50 osalejat) ja iga rühm on eraldi koolitus.',
+          'Mõnikord tellib tellija **mahu**, mitte kindla kuupäevaga koolituse: näiteks 500 osalejat ühes maakonnas perioodi jooksul. Sellise vooru lehel on pealkirja kõrval märgis **„Klastrivoor“** ja tabeli asemel on kaardid **„Vooru klastrid“**. Klaster on jagatud **rühmadeks** (nt 10 rühma × 50 osalejat) ja iga rühm on eraldi koolitus.',
       },
       {
         kind: 'para',

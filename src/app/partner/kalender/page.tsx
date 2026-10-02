@@ -69,7 +69,7 @@ export default async function PartnerCalendarPage() {
                       <span className="font-semibold">{entry.code}</span> — {entry.title}
                       <span className="block text-[12px] text-[var(--color-muted)]">
                         {WORKSHOP_TYPE_LABELS[entry.workshopType]} · {entry.county}
-                        {entry.locationText ? `, ${entry.locationText}` : ''} · kuni {entry.participantCount} osalejat · {entry.lotCode}
+                        {entry.locationText ? `, ${entry.locationText}` : ''} · oodatavalt {entry.participantCount} osalejat · {entry.lotCode}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">

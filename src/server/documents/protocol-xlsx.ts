@@ -262,7 +262,7 @@ export async function buildProtocolXlsx(
     ),
     sheet(
       'Täitjate kaupa',
-      ['koht', 'partner', 'registrikood', 'kood', 'nimetus', 'kuupaev', 'formaat', 'maakond', 'asukoht', 'sihtruhm', 'max_osalejaid', 'keel', 'hind_osaleja_kohta', 'hind_ruhma_taitumisel'],
+      ['koht', 'partner', 'registrikood', 'kood', 'nimetus', 'kuupaev', 'formaat', 'maakond', 'asukoht', 'sihtruhm', 'oodatav_osalejate_arv', 'keel', 'hind_osaleja_kohta', 'hind_oodatava_arvuga'],
       allocationByPartner(data).flatMap((group) =>
         group.trainings.map((t) => ({
           koht: String(group.rank),
@@ -275,10 +275,10 @@ export async function buildProtocolXlsx(
           maakond: t.county,
           asukoht: t.locationText,
           sihtruhm: t.targetGroup ?? '',
-          max_osalejaid: String(t.participantCount),
+          oodatav_osalejate_arv: String(t.participantCount),
           keel: t.language,
           hind_osaleja_kohta: eur(group.unitPriceEur),
-          hind_ruhma_taitumisel: eur(Math.round(t.participantCount * group.unitPriceEur * 100) / 100),
+          hind_oodatava_arvuga: eur(Math.round(t.participantCount * group.unitPriceEur * 100) / 100),
         })),
       ),
     ),

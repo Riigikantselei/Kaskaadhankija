@@ -226,7 +226,7 @@ export function NewRoundForm({
                   <th className="kh-th">Toimumine</th>
                   <th className="kh-th">Maakond</th>
                   <th className="kh-th">Sihtrühm</th>
-                  <th className="kh-th">{HIND.maxOsalejaid}</th>
+                  <th className="kh-th">{HIND.osalejateArv}</th>
                   <th className="kh-th">{HIND.tellijaHinnang}</th>
                 </tr>
               </thead>

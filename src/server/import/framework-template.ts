@@ -96,7 +96,7 @@ const EXPLANATION_ROWS: ReadonlyArray<Record<string, string>> = [
     leht: 'Hankeosad',
     väli: 'max_osalejaid_ruhmas',
     selgitus:
-      'Ühe rühma (töötoa) osalejate ülempiir raamlepingu järgi, nt 75. Tühi = piiri ei ole. Kindla kuupäevaga koolitus, mille max osalejaid on üle piiri, saab impordil hoiatuse; klastri rühm, mis on piirist suurem, lükatakse tagasi.',
+      'Ühe rühma (töötoa) osalejate ülempiir raamlepingu järgi, nt 75. Tühi = piiri ei ole. Kindla kuupäevaga koolitus, mille oodatav osalejate arv on üle piiri, saab impordil hoiatuse; klastri rühm, mis on piirist suurem, lükatakse tagasi.',
   },
   {
     leht: 'Hankeosad',
@@ -116,7 +116,7 @@ const EXPLANATION_ROWS: ReadonlyArray<Record<string, string>> = [
     leht: 'Partnerid',
     väli: 'uhikuhind',
     selgitus:
-      'Partneri raamlepingu hind ÜHE OSALEJA KOHTA selles hankeosas, eurodes, komaga (nt 60,50). Koolituse hind rühma täitumisel = max osalejaid × see hind; jaotuse hind max osalejate korral on nende summa. Vana veerunimi „uhikhind“ võetakse samuti vastu.',
+      'Partneri raamlepingu hind ÜHE OSALEJA KOHTA selles hankeosas, eurodes, komaga (nt 60,50). Koolituse hind oodatava osalejate arvu korral = oodatav osalejate arv × see hind; jaotuse hind kokku on nende summa. Vana veerunimi „uhikhind“ võetakse samuti vastu.',
   },
   {
     leht: 'Partnerid',

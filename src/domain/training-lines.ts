@@ -42,7 +42,7 @@ export function fixedTrainingLine(row: TrainingLineRow): string {
   return `${row.code} — ${row.title} · ${formatIsoDay(row.eventDate)} · ${row.workshopTypeLabel} · ${place(row)} · ${row.participantCount} osalejat`;
 }
 
-/** „KL-2026-001 — Töötuba 1 … · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × kuni 50 osalejat (500 kokku)“ */
+/** „KL-2026-001 — Töötuba 1 … · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × 50 osalejat (500 kokku)“ */
 export function clusterLine(rows: readonly TrainingLineRow[], all: readonly GroupLike[]): string {
   const head = rows[0]!;
   const shown: GroupLike[] = rows.map((r) => ({ groupIndex: r.groupIndex ?? 0, participantCount: r.participantCount }));
