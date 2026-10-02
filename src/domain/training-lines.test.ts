@@ -47,7 +47,7 @@ describe('trainingLines', () => {
   it('writes a whole cluster as one line with its period and group plan', () => {
     const groups = Array.from({ length: 10 }, (_, i) => group(i + 1));
     expect(trainingLines(groups)).toEqual([
-      'KL-2026-001 — Töötuba 1 Harjumaa väikeettevõtjatele · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × kuni 50 osalejat (500 kokku)',
+      'KL-2026-001 — Töötuba 1 Harjumaa väikeettevõtjatele · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × 50 osalejat (500 kokku)',
     ]);
   });
 
@@ -55,7 +55,7 @@ describe('trainingLines', () => {
     const all = Array.from({ length: 10 }, (_, i) => ({ groupIndex: i + 1, participantCount: 50 }));
     const mine = [5, 6, 7, 8, 9, 10].map((i) => group(i));
     expect(trainingLines(mine, new Map([['KL-2026-001', all]]))).toEqual([
-      'KL-2026-001 — Töötuba 1 Harjumaa väikeettevõtjatele · okt–dets 2026 · Töötuba 1 · Harju maakond · 6 rühma (05–10) × kuni 50 osalejat (300 kokku)',
+      'KL-2026-001 — Töötuba 1 Harjumaa väikeettevõtjatele · okt–dets 2026 · Töötuba 1 · Harju maakond · 6 rühma (05–10) × 50 osalejat (300 kokku)',
     ]);
   });
 

@@ -1546,7 +1546,7 @@ describe('[V-09][K-10] klastrivoor', () => {
     // the receipt speaks in groups
     const receipts = noticeBodies('confirmation_receipt');
     expect(receipts).toHaveLength(1);
-    expect(receipts[0]!.body).toContain('2 rühma (01–02) × kuni 50 osalejat (100 kokku)');
+    expect(receipts[0]!.body).toContain('2 rühma (01–02) × 50 osalejat (100 kokku)');
     expect(receipts[0]!.body).toContain('prognoositud 2 rühma');
     expect(receipts[0]!.body).not.toContain('koolitust');
   });
@@ -1567,7 +1567,7 @@ describe('[V-09][K-10] klastrivoor', () => {
     expect(forB.body).toContain('6 rühma');
     expect(forB.body).toContain('läheks teile 6 rühma');
     expect(forB.body).toContain(`${cluster.clusterCode} —`);
-    expect(forB.body).toContain('6 rühma (05–10) × kuni 50 osalejat (300 kokku)');
+    expect(forB.body).toContain('6 rühma (05–10) × 50 osalejat (300 kokku)');
     const forC = closing.find((n) => n.to === fx.lotPartnerIds[2])!;
     expect(forC.body).toContain('ühtegi rühma');
   });
@@ -1577,7 +1577,7 @@ describe('[V-09][K-10] klastrivoor', () => {
     const published = noticeBodies('round_published');
     expect(published).toHaveLength(3);
     expect(published[0]!.body).toContain('järgmise mahulise tellimuse (1 klaster, 10 rühma)');
-    expect(published[0]!.body).toContain('10 rühma × kuni 50 osalejat (500 kokku)');
+    expect(published[0]!.body).toContain('10 rühma × 50 osalejat (500 kokku)');
     expect(published[0]!.body).toContain('mitu rühma olete valmis läbi viima');
     expect(published[0]!.body.split(cluster.clusterCode).length).toBe(2);
   });

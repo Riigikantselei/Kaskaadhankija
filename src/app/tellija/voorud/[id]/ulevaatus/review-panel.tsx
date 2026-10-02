@@ -130,7 +130,7 @@ export function ReviewPanel({
                 <th className="kh-th">Märkeid</th>
                 <th className="kh-th">Ettepanekus</th>
                 <th className="kh-th">{confirmed ? 'Lõplikus' : 'Praegu'}</th>
-                <th className="kh-th">{HIND.tellimuseMax}</th>
+                <th className="kh-th">{HIND.hindKokku}</th>
                 <th className="kh-th">Töömaht</th>
                 {!confirmed && <th className="kh-th">Kohandus</th>}
               </tr>
@@ -294,7 +294,7 @@ export function ReviewPanel({
                   <th className="kh-th">Formaat</th>
                   <th className="kh-th">Maakond, asukoht</th>
                   <th className="kh-th">Sihtrühm</th>
-                  <th className="kh-th">Osalejaid</th>
+                  <th className="kh-th">{HIND.osalejateArv}</th>
                 </tr>
               </thead>
               <tbody>
@@ -376,7 +376,7 @@ export function ReviewPanel({
                   <th className="kh-th">Tellimus</th>
                   <th className="kh-th">Partner</th>
                   <th className="kh-th">Koolitusi</th>
-                  <th className="kh-th">{HIND.tellimuseMax}</th>
+                  <th className="kh-th">{HIND.hindKokku}</th>
                 </tr>
               </thead>
               <tbody>

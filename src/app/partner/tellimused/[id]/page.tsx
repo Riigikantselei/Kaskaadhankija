@@ -17,6 +17,7 @@ import { ORDER_STATUS_LABELS, TRAINING_STATUS_LABELS } from '@/domain/round-stat
 import { LANGUAGE_LABELS } from '@/domain/statuses';
 import { StatusBadge } from '@/components/status-badge';
 import { requirePartner } from '@/server/auth/actor';
+import { HIND } from '@/domain/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -123,7 +124,7 @@ export default async function PartnerOrderDetail({ params }: { params: Promise<{
                   <th className="kh-th">Formaat</th>
                   <th className="kh-th">Toimumine</th>
                   <th className="kh-th">Asukoht</th>
-                  <th className="kh-th">Osalejaid</th>
+                  <th className="kh-th">{HIND.osalejateArv}</th>
                   <th className="kh-th">Keel</th>
                   <th className="kh-th">Olek</th>
                   <th className="kh-th">Hind osaleja kohta</th>

@@ -127,7 +127,7 @@ export default async function TrainingsImportPage({
                 ['maakond', true, 'nt Harju maakond, Harjumaa, Harju, või Veebipõhine'],
                 ['asukoht', false, 'täpsem asukoht või platvorm'],
                 ['sihtruhm', true, Object.values(TARGET_GROUPS).join(', ')],
-                ['osalejate_arv', true, 'maksimaalne osalejate arv, 1–2000; klastri real kogu klastri osalejate arv'],
+                ['osalejate_arv', true, 'oodatav (optimaalne) osalejate arv, 1–2000; klastri real kogu klastri osalejate arv'],
                 ['ruhma_suurus, ruhmi', false, 'ainult klastri real: rühma suurus (kuni hankeosa rühma ülempiir) ja/või rühmade arv (1–99); üks piisab, viimane rühm kannab jäägi'],
                 ['keel', true, 'et, ru, en'],
                 ['hinnanguline_maksumus', false, 'tellija sisemine hinnang (€); partnerid seda ei näe — nende hind tuleb raamlepingust'],

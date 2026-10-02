@@ -452,7 +452,7 @@ export function parseTrainingRows(
       if (participantCount !== null && ceiling !== null && participantCount > ceiling) {
         warnings.push({
           field: 'osalejate_arv',
-          message: `max osalejaid ${participantCount} ületab hankeosa ${lotCode} rühma ülempiiri ${ceiling}`,
+          message: `oodatav osalejate arv ${participantCount} ületab hankeosa ${lotCode} rühma ülempiiri ${ceiling}`,
         });
       }
     }

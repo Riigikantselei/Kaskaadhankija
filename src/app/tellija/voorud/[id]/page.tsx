@@ -522,7 +522,7 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
                             );
                             return (
                               <li key={g.id} style={g.withdrawnAt !== null ? { opacity: 0.5 } : undefined}>
-                                <span className="font-semibold">{g.code}</span> · kuni {g.participantCount} osalejat ·{' '}
+                                <span className="font-semibold">{g.code}</span> · oodatavalt {g.participantCount} osalejat ·{' '}
                                 {g.withdrawnAt !== null
                                   ? `tagasi võetud: ${g.withdrawnReason}`
                                   : holder

@@ -668,19 +668,19 @@ describe('[L-22] the final allocation by partner', () => {
     const allocated = protocol.data.allocation.byTraining.filter((row) => row.final !== null);
     expect(byPartner.rows).toHaveLength(allocated.length);
     expect(byPartner.headers).toEqual(
-      expect.arrayContaining(['koht', 'partner', 'kood', 'nimetus', 'kuupaev', 'formaat', 'sihtruhm', 'max_osalejaid', 'hind_osaleja_kohta']),
+      expect.arrayContaining(['koht', 'partner', 'kood', 'nimetus', 'kuupaev', 'formaat', 'sihtruhm', 'oodatav_osalejate_arv', 'hind_osaleja_kohta']),
     );
     expect(byPartner.rows[0]!.partner).toBe(partnerName(0));
   });
 });
 
 describe('[T-08] the protocol prices each partner at their own rate', () => {
-  it('prints the price per participant and the price at max participants, never a "maksumus"', async () => {
+  it('prints the price per participant and the price at the expected participants, never a "maksumus"', async () => {
     const roundId = fullRound();
     const protocol = stored(roundId);
     const text = pdfText(await buildProtocolPdf(protocol.data, protocol.contentHash));
     expect(text).toContain('Hind osaleja kohta');
-    expect(text).toContain('hind max osalejate korral');
+    expect(text).toContain('hind kokku oodatava osalejate arvu korral');
     expect(text).not.toContain('Ühikhind');
     const byPartner = allocationByPartner(protocol.data);
     expect(byPartner.length).toBeGreaterThan(0);

@@ -177,7 +177,7 @@ const CLUSTER_ROWS: TrainingRow[] = [
     ruhmi: '10',
     keel: 'et',
     hinnanguline_maksumus: '20000',
-    markused: 'Klaster: 10 rühma × kuni 50 osalejat; iga rühm on eraldi koolitus, mille aeg lepitakse kokku täitjaga',
+    markused: 'Klaster: 10 rühma × 50 osalejat; iga rühm on eraldi koolitus, mille aeg lepitakse kokku täitjaga',
   },
 ];
 

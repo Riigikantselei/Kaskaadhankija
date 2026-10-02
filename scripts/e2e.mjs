@@ -456,7 +456,7 @@ async function walkPartnerVisibility(page, server) {
   check(
     'the calendar shows the seeded cluster as one header over its groups [L-28]',
     (await page.getByTestId('cluster-header').count()) === 1 &&
-      (await appHtml(page)).includes('10 rühma × kuni 50 osalejat (500 kokku)'),
+      (await appHtml(page)).includes('10 rühma × 50 osalejat (500 kokku)'),
   );
   await page.goto(`${base}/tellija/voorud`);
   await page.waitForSelector('h1', { timeout: 20_000 });

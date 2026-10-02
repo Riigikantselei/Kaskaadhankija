@@ -21,6 +21,7 @@ import type {
   TDocumentDefinitions,
 } from 'pdfmake/interfaces';
 import { formatDateTime, formatDateTimeShort, formatEur, formatIsoDay, formatEurCents, formatEventWhen } from '@/domain/format';
+import { HIND } from '@/domain/pricing';
 import {
   ADJUSTMENT_KIND_LABELS,
   BID_KIND_LABELS,
@@ -354,7 +355,7 @@ function buildDefinition(data: RoundProtocolData, hash: string): TDocumentDefini
   content.push(
     heading(isCluster ? `2. Vooru klastrid ja rühmad (${live.length} rühma)` : `2. Vooru koolitused (${live.length})`),
     table(
-      ['Kood', 'Nimetus', isCluster ? 'Periood' : 'Kuupäev', 'Formaat', 'Maakond', 'Sihtrühm', 'Osalejaid', 'Keel'],
+      ['Kood', 'Nimetus', isCluster ? 'Periood' : 'Kuupäev', 'Formaat', 'Maakond', 'Sihtrühm', HIND.osalejateArv, 'Keel'],
       [11, 27, 10, 10, 17, 13, 7, 5],
       trainingRows,
       { empty: 'Voorus ei olnud ühtki koolitust.' },
@@ -523,13 +524,13 @@ function buildDefinition(data: RoundProtocolData, hash: string): TDocumentDefini
     for (const group of byPartner) {
       content.push(
         {
-          text: `Koht ${group.rank} — ${group.partnerName} (reg. kood ${group.partnerRegCode}) · ${group.trainings.length} koolitust · kuni ${group.participantCount} osalejat · hind osaleja kohta ${formatEurCents(group.unitPriceEur)} · hind max osalejate korral ${formatEurCents(group.maxPriceEur)}`,
+          text: `Koht ${group.rank} — ${group.partnerName} (reg. kood ${group.partnerRegCode}) · ${group.trainings.length} koolitust · oodatavalt ${group.participantCount} osalejat · ${HIND.osalejaKohta.toLowerCase()} ${formatEurCents(group.unitPriceEur)} · ${HIND.hindKokku.toLowerCase()} ${formatEurCents(group.maxPriceEur)}`,
           style: 'td',
           bold: true,
           margin: [0, 4, 0, 2],
         },
         table(
-          ['Kood', 'Nimetus', 'Kuupäev', 'Formaat', 'Maakond, asukoht', 'Sihtrühm', 'Osalejaid'],
+          ['Kood', 'Nimetus', 'Kuupäev', 'Formaat', 'Maakond, asukoht', 'Sihtrühm', HIND.osalejateArv],
           [10, 27, 10, 10, 20, 15, 8],
           group.trainings.map((t) => [
             t.code,
