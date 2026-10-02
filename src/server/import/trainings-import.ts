@@ -15,14 +15,14 @@
 
 import { eq, inArray } from 'drizzle-orm';
 import { importBatches, lots, trainings, type ImportKind, type ImportSummary } from '@/db/schema';
-import { countRows, parseTrainingRows, type ParsedRow, type RowDiagnostic, type TrainingRow } from '@/domain/import-rows';
+import { countRows, fold, parseTrainingRows, type ParsedRow, type RowDiagnostic, type TrainingRow } from '@/domain/import-rows';
 import { isTrainingImportable } from '@/domain/round-statuses';
 import { tallinnIsoDay } from '@/domain/format';
 import { logAudit } from '../audit';
 import type { Ctx } from '../context';
 import { reconcileClusterRows } from './cluster-rows';
 import { parseCsv } from './csv';
-import { parseXlsx } from './xlsx';
+import { parseXlsxSheets } from './xlsx';
 
 export type ImportSource = 'upload' | 'seed' | 'sample';
 
@@ -69,14 +69,25 @@ export function lotGroupCeilings(ctx: Ctx): Record<string, number | null> {
 }
 
 /** Read an uploaded file into raw rows, choosing the reader by extension. */
+/** The upload is a cascade-round workbook, sent to a single-table import. */
+export const ROUND_WORKBOOK_MESSAGE =
+  'See on kaskaadivooru töövihik (lehed „Voor“ ja „Koolitused“). Laadi see üles vooru skeemi impordis: Voorud → Uus voor → „Laadi skeem üles“.';
+
 export async function readTable(
   fileName: string,
   content: Buffer,
 ): Promise<{ rows: Array<Record<string, string>>; error?: string }> {
   const lower = fileName.toLowerCase();
   if (lower.endsWith('.xlsx')) {
-    const parsed = await parseXlsx(content);
-    return { rows: parsed.rows };
+    const sheets = await parseXlsxSheets(content);
+    // A round workbook [L-20] read here would fail on its first sheet, "Voor",
+    // as a missing „kood“ column — say where it belongs instead.
+    const names = new Set([...sheets.keys()].map(fold));
+    if (names.has('voor') && names.has('koolitused')) {
+      return { rows: [], error: ROUND_WORKBOOK_MESSAGE };
+    }
+    const first = sheets.values().next().value;
+    return { rows: first?.rows ?? [] };
   }
   if (lower.endsWith('.csv') || lower.endsWith('.txt')) {
     return { rows: parseCsv(content.toString('utf8')).rows };

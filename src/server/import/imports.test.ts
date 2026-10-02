@@ -13,13 +13,16 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { importBatches, lotPartners, lots, partners, roundParticipants, rounds, trainings } from '@/db/schema';
 import { parseCsv } from './csv';
-import { parseXlsx } from './xlsx';
+import { buildXlsx, parseXlsx } from './xlsx';
+import { buildRoundTemplate } from './round-template';
 import {
   applyTrainingsImport,
   discardImport,
   importTrainingsFromRows,
   nextTrainingCode,
   previewTrainingsImport,
+  readTable,
+  ROUND_WORKBOOK_MESSAGE,
 } from './trainings-import';
 import { applyPartnersImport, importPartnersFromRows, previewPartnersImport } from './partners-import';
 import {
@@ -554,5 +557,17 @@ describe('[L-28] a cluster row in the calendar import', () => {
     );
     expect(warned.summary).toMatchObject({ valid: 1, withWarnings: 1 });
     expect(warned.rows[0]?.warnings[0]?.message).toMatch(/ületab hankeosa OSA-2 rühma ülempiiri 75/);
+  });
+});
+
+describe('a round workbook on a single-table import page', () => {
+  it('is turned away with where it belongs, not a missing column [L-20]', async () => {
+    const workbook = await buildRoundTemplate({ lotCodes: ['OSA-1'], lotCode: 'OSA-1', defaultCapOptions: null, trainingRows: [] });
+    expect(await readTable('voor.xlsx', workbook)).toEqual({ rows: [], error: ROUND_WORKBOOK_MESSAGE });
+  });
+
+  it('still reads the first sheet of any other workbook', async () => {
+    const workbook = await buildXlsx('Koolitused', ['kood'], [{ kood: 'KK-2026-701' }]);
+    expect(await readTable('kalender.xlsx', workbook)).toEqual({ rows: [{ kood: 'KK-2026-701' }] });
   });
 });
