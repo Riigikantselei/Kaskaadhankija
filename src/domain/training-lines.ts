@@ -7,6 +7,7 @@
  * wording to account without a database.
  */
 
+import { placeText } from './places';
 import { describeGroups, type DateKind, type GroupLike } from './clusters';
 import { formatIsoDay, formatPeriod } from './format';
 
@@ -34,7 +35,7 @@ export interface TrainingLineRow {
 export type ClusterGroups = ReadonlyMap<string, readonly GroupLike[]>;
 
 function place(row: TrainingLineRow): string {
-  return `${row.county}${row.locationText ? `, ${row.locationText}` : ''}`;
+  return placeText(row.county, row.locationText);
 }
 
 /** The dated form — unchanged since v2.6, so stored notices still match. */

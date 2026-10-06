@@ -8,6 +8,7 @@
  * bronnitud“.
  */
 
+import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { getDb } from '@/db';
 import { formatEventWhen, formatMonthLabel, monthKey } from '@/domain/format';
@@ -68,8 +69,7 @@ export default async function PartnerCalendarPage() {
                     <span className="min-w-[16rem] flex-1">
                       <span className="font-semibold">{entry.code}</span> — {entry.title}
                       <span className="block text-[12px] text-[var(--color-muted)]">
-                        {WORKSHOP_TYPE_LABELS[entry.workshopType]} · {entry.county}
-                        {entry.locationText ? `, ${entry.locationText}` : ''} · oodatavalt {entry.participantCount} osalejat · {entry.lotCode}
+                        {WORKSHOP_TYPE_LABELS[entry.workshopType]} · {placeText(entry.county, entry.locationText)} · oodatavalt {entry.participantCount} osalejat · {entry.lotCode}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">

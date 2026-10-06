@@ -124,7 +124,7 @@ export default async function TrainingsImportPage({
                 ['kuupaev', true, '07.10.2026 või 2026-10-07; klastri real tühi'],
                 ['lopp_kuupaev', false, 'mitmepäevase sündmuse lõpp'],
                 ['periood_algus, periood_lopp', false, 'ainult klastri real (KL-kood): periood, mille jooksul rühmad toimuvad'],
-                ['maakond', true, 'nt Harju maakond, Harjumaa, Harju, või Veebipõhine'],
+                ['maakond', true, 'maakond (nt Harju maakond, Harjumaa) või linn (nt Tallinn — kuvatakse nii, nagu märgitud), või Veebipõhine'],
                 ['asukoht', false, 'täpsem asukoht või platvorm'],
                 ['sihtruhm', true, Object.values(TARGET_GROUPS).join(', ')],
                 ['osalejate_arv', true, 'oodatav (optimaalne) osalejate arv, 1–2000; klastri real kogu klastri osalejate arv'],

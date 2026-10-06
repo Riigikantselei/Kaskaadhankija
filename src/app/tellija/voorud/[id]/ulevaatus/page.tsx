@@ -9,6 +9,7 @@
  * rakendama" [T-03].
  */
 
+import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { eq } from 'drizzle-orm';
@@ -125,7 +126,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
           clusterCode: t.clusterCode,
           groupIndex: t.groupIndex,
           workshopType: WORKSHOP_TYPE_LABELS[t.workshopType],
-          place: `${t.county}${t.locationText ? `, ${t.locationText}` : ''}`,
+          place: placeText(t.county, t.locationText),
           targetGroup: TARGET_GROUPS[t.targetGroup],
           participantCount: t.participantCount,
         })),

@@ -14,6 +14,7 @@
 
 import { COUNTIES, LANGUAGE_LABELS, WORKSHOP_TYPE_LABELS, type County, type OrderLanguage, type WorkshopType } from './statuses';
 import { TARGET_GROUPS, type TargetGroup } from './round-statuses';
+import { locationWithTown, townOf } from './places';
 import {
   CLUSTER_CODE_RE,
   GROUP_CODE_RE,
@@ -352,7 +353,10 @@ export function parseTrainingRows(
 
     const title = take('nimetus', parseText(cells.nimetus ?? '', 'nimetus', { min: 3, max: 160 }));
     const workshopType = take('formaat', parseEnum(cells.formaat ?? '', WORKSHOP_TYPE_LABELS, 'formaat'));
-    const county = take('maakond', parseCounty(cells.maakond ?? ''));
+    // A town in the place column („Tallinn“) is kept as marked: its county is
+    // stored and the town leads the location text [L-20].
+    const town = townOf(cells.maakond ?? '');
+    const county = town ? town.county : take('maakond', parseCounty(cells.maakond ?? ''));
     const targetGroup = take('sihtruhm', parseEnum(cells.sihtruhm ?? '', TARGET_GROUPS, 'sihtrühm'));
     // A cluster is the whole order: 500 participants, cut into groups below.
     const participantCount = take(
@@ -402,7 +406,8 @@ export function parseTrainingRows(
     const estimatedValueEur = (cells.hinnanguline_maksumus ?? '').trim()
       ? take('hinnanguline_maksumus', parseAmount(cells.hinnanguline_maksumus ?? '', 'tellija hinnang'))
       : 0;
-    const locationText = take('asukoht', parseText(cells.asukoht ?? '', 'asukoht', { max: 160, required: false }));
+    const writtenLocation = take('asukoht', parseText(cells.asukoht ?? '', 'asukoht', { max: 160, required: false }));
+    const locationText = town && writtenLocation !== null ? locationWithTown(town.town, writtenLocation) : writtenLocation;
     const notes = take('markused', parseText(cells.markused ?? '', 'märkused', { max: 600, required: false }));
 
     const rawEnd = (cells.lopp_kuupaev ?? '').trim();

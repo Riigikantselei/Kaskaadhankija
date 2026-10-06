@@ -22,6 +22,7 @@
  *    the tedium the room complained about; the checkboxes stay for the rest.
  */
 
+import { placeParts, placeText } from '@/domain/places';
 import { useMemo, useState } from 'react';
 import { ActionForm } from '@/components/action-form';
 import { StatusBadge } from '@/components/status-badge';
@@ -314,8 +315,7 @@ export function MarkingForm({
                     )}
                   </div>
                   <div className="mt-0.5 text-[12.5px] text-[var(--color-muted)]">
-                    {cluster.workshopType} · {cluster.targetGroup} · {cluster.county}
-                    {cluster.locationText && `, ${cluster.locationText}`} · {cluster.periodText} ({cluster.periodDaysText}) ·{' '}
+                    {cluster.workshopType} · {cluster.targetGroup} · {placeText(cluster.county, cluster.locationText)} · {cluster.periodText} ({cluster.periodDaysText}) ·{' '}
                     {cluster.language}
                     {cluster.notes && ` · ${cluster.notes}`}
                   </div>
@@ -469,10 +469,10 @@ export function MarkingForm({
                       )}
                     </td>
                     <td className="kh-td text-[13px]">
-                      {training.county}
-                      {training.locationText && (
+                      {placeParts(training.county, training.locationText).main}
+                      {placeParts(training.county, training.locationText).detail && (
                         <div className="text-[12px] text-[var(--color-muted)]">
-                          {training.locationText}
+                          {placeParts(training.county, training.locationText).detail}
                         </div>
                       )}
                     </td>

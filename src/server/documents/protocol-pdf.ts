@@ -13,6 +13,7 @@
  * a readable substitute rather than mojibake.
  */
 
+import { placeText } from '@/domain/places';
 import pdfmake from 'pdfmake';
 import type {
   Content,
@@ -346,7 +347,7 @@ function buildDefinition(data: RoundProtocolData, hash: string): TDocumentDefini
       t.title,
       formatEventWhen(t),
       t.workshopType,
-      `${t.county}${t.locationText ? `, ${t.locationText}` : ''}`,
+      placeText(t.county, t.locationText),
       t.targetGroup ?? DASH,
       String(t.participantCount),
       t.language,
@@ -537,7 +538,7 @@ function buildDefinition(data: RoundProtocolData, hash: string): TDocumentDefini
             t.title,
             formatEventWhen(t),
             t.workshopType,
-            `${t.county}${t.locationText ? `, ${t.locationText}` : ''}`,
+            placeText(t.county, t.locationText),
             t.targetGroup ?? DASH,
             String(t.participantCount),
           ]),

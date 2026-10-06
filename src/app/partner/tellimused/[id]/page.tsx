@@ -7,6 +7,7 @@
  * another partner is a 404, not a leak [N-04].
  */
 
+import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -161,8 +162,7 @@ export default async function PartnerOrderDetail({ params }: { params: Promise<{
                         {training.eventEnd && ` – ${formatIsoDay(training.eventEnd)}`}
                       </td>
                       <td className="kh-td text-[13px]">
-                        {training.county}
-                        {training.locationText && `, ${training.locationText}`}
+                        {placeText(training.county, training.locationText)}
                       </td>
                       <td className="kh-td tabular-nums">{training.participantCount}</td>
                       <td className="kh-td text-[13px] whitespace-nowrap">

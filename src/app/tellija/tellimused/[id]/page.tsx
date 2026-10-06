@@ -6,6 +6,7 @@
  * partner's contact or a lot's configuration changes afterwards.
  */
 
+import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { eq } from 'drizzle-orm';
@@ -137,8 +138,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                         {training.eventEnd && ` – ${formatIsoDay(training.eventEnd)}`}
                       </td>
                       <td className="kh-td text-[13px]">
-                        {training.county}
-                        {training.locationText && `, ${training.locationText}`}
+                        {placeText(training.county, training.locationText)}
                       </td>
                       <td className="kh-td tabular-nums">{training.participantCount}</td>
                       <td className="kh-td text-[13px] whitespace-nowrap">
