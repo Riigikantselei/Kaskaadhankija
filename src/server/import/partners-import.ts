@@ -157,28 +157,16 @@ export function annotatePartnerPreview(
  * Refuse a contact address that cannot become the partner's sign-in.
  *
  * The official contact *is* the login [L-21], so an address that belongs to a
- * buyer user, or that already represents another company, cannot be the
- * contact either — the formal notices would go somewhere nobody can answer
- * from. Two rows in the same file claiming one address are refused too.
+ * buyer user cannot be the contact — the formal notices would go somewhere
+ * nobody can answer from. One address may be the contact of several companies,
+ * in the database or in the same file: the person signs in once and chooses
+ * which company to act for [L-08, v2.8].
  */
 export function checkPartnerContacts(ctx: Ctx, stored: readonly StoredPartnerRow[]): void {
-  const seenInFile = new Map<string, string>();
-
   for (const row of stored) {
     if (!row.value) continue;
     const email = row.value.contactEmail.trim().toLowerCase();
     const regCode = row.value.regCode;
-
-    const claimedBy = seenInFile.get(email);
-    if (claimedBy && claimedBy !== regCode) {
-      row.errors.push({
-        field: 'e_post',
-        message: `sama aadress on failis ka partneril registrikoodiga ${claimedBy} — üks aadress esindab ühte ettevõtet`,
-      });
-      row.value = null;
-      continue;
-    }
-    seenInFile.set(email, regCode);
 
     const partner = ctx.tx
       .select({ id: partners.id })

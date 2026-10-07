@@ -233,7 +233,7 @@ export function AddLotPartnerForm({ lotId, lotCode }: { lotId: string; lotCode: 
     >
       <h3 className="text-[13px] font-semibold">Uus partner hankeosas {lotCode}</h3>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <Field label="Registrikood" name="regCode" hint="8 numbrit" required />
+        <Field label="Registrikood" name="regCode" hint="8 numbrit; välismaine nt FI 0839665-2" required />
         <Field label="Partneri nimi" name="partnerName" hint="Uue ettevõtte puhul" />
         <Field label="Kontaktisik" name="contactName" required />
         <Field label="E-post" name="contactEmail" type="email" required />

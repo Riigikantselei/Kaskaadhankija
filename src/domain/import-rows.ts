@@ -161,6 +161,23 @@ export function parseCounty(input: string): FieldResult<County> {
   return bad(`tundmatu maakond: „${input}“`);
 }
 
+/**
+ * A partner's registry code: an Estonian one is 8 digits; a foreign member of a
+ * joint bid keeps its own country's code — „0839665-2“ (Finnish Y-tunnus) or,
+ * with the country in front, „LV 40103978328“. A bare run of digits that is not
+ * 8 long is refused, so a mistyped Estonian code is not taken for a foreign one.
+ */
+export function parseRegCode(input: string): FieldResult<string> {
+  const text = input.replace(/[\s\u00a0]/g, '').toUpperCase();
+  if (!text) return bad('registrikood on puudu');
+  if (/^\d{8}$/.test(text)) return ok(text);
+  const foreign = /^[A-Z0-9][A-Z0-9./-]{3,19}$/.test(text) && /\d/.test(text) && !/^\d+$/.test(text);
+  if (foreign) return ok(text);
+  return bad(
+    `registrikood peab olema 8 numbrit (Eesti ettevõte) või välismaine kood, nt FI 0839665-2 või LV 40103978328 — saadi „${input.trim()}“`,
+  );
+}
+
 /** Accepts '1450', '1 450,00', '1450.00', '1.450,00'. */
 export function parseAmount(input: string, fieldName = 'summa'): FieldResult<number> {
   const text = input.trim();
@@ -650,15 +667,7 @@ export function parsePartnerRows(
       parseAmount(cells.uhikuhind ?? cells[UNIT_PRICE_ALIAS] ?? '', 'hind osaleja kohta'),
     );
 
-    const rawReg = (cells.registrikood ?? '').replace(/[\s ]/g, '');
-    let regCode: string | null = null;
-    if (!rawReg) {
-      errors.push({ field: 'registrikood', message: 'registrikood on puudu' });
-    } else if (!/^\d{8}$/.test(rawReg)) {
-      errors.push({ field: 'registrikood', message: `registrikood peab olema 8 numbrit, saadi „${rawReg}“` });
-    } else {
-      regCode = rawReg;
-    }
+    const regCode = take('registrikood', parseRegCode(cells.registrikood ?? ''));
 
     const rawEmail = (cells.e_post ?? '').trim();
     let contactEmail: string | null = null;
@@ -821,12 +830,11 @@ export function parseRepresentativeRows(
       return result.value;
     };
 
-    const rawReg = (cells.registrikood ?? '').replace(/[\s ]/g, '');
+    const parsedReg = parseRegCode(cells.registrikood ?? '');
+    const rawReg = parsedReg.ok ? parsedReg.value : '';
     let regCode: string | null = null;
-    if (!rawReg) {
-      errors.push({ field: 'registrikood', message: 'registrikood on puudu' });
-    } else if (!/^\d{8}$/.test(rawReg)) {
-      errors.push({ field: 'registrikood', message: `registrikood peab olema 8 numbrit, saadi „${rawReg}“` });
+    if (!parsedReg.ok) {
+      errors.push({ field: 'registrikood', message: parsedReg.message });
     } else if (!known.has(rawReg)) {
       errors.push({
         field: 'registrikood',

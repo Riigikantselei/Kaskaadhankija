@@ -114,7 +114,7 @@ export default async function PartnersImportPage({
             <tbody>
               {[
                 ['partner', 'ettevõtte nimi, 2–120 tähemärki'],
-                ['registrikood', 'täpselt 8 numbrit'],
+                ['registrikood', '8 numbrit; ühispakkumise välismaine liige oma riigi koodiga, nt FI 0839665-2'],
                 ['hankeosa', lotCodes.join(', ')],
                 ['koht', 'järjekoht hankeosas, 1 = eesõigus; peab olema hankeosa piires unikaalne'],
                 ['kontaktisik', 'nimi, 2–80 tähemärki'],

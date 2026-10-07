@@ -120,9 +120,15 @@ const EXPLANATION_ROWS: ReadonlyArray<Record<string, string>> = [
   },
   {
     leht: 'Partnerid',
+    väli: 'registrikood',
+    selgitus:
+      'Üks kood lahtris: Eesti ettevõttel 8 numbrit. Ühispakkumise puhul juhtpartneri kood (kõik liikmed võivad olla nimes). Välismaine ettevõte oma riigi koodiga, nt FI 0839665-2 või LV 40103978328.',
+  },
+  {
+    leht: 'Partnerid',
     väli: 'e_post',
     selgitus:
-      'Raamlepingu kontaktisiku aadress. Sellele lähevad vooru teated JA sellega saab partner sisse logida — üks aadress esindab ühte ettevõtet.',
+      'Raamlepingu kontaktisiku aadress. Sellele lähevad vooru teated JA sellega saab partner sisse logida. Lahtris on üks aadress. Sama aadress võib olla mitme ettevõtte kontaktisik; sisselogimisel valib inimene, kelle nimel tegutseb. Lisainimesed käivad lehele „Esindajad“.',
   },
   {
     leht: 'Partnerid',
