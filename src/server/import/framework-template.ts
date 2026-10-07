@@ -72,7 +72,7 @@ const EXPLANATION_HEADERS = ['leht', 'väli', 'selgitus'] as const;
 
 const EXPLANATION_ROWS: ReadonlyArray<Record<string, string>> = [
   { leht: 'Raamleping', väli: 'nimetus', selgitus: 'Raamlepingu nimi, nagu see hankes on.' },
-  { leht: 'Raamleping', väli: 'viitenumber', selgitus: 'Riigihanke viitenumber, ainult numbrid (nt 10567384).' },
+  { leht: 'Raamleping', väli: 'viitenumber', selgitus: 'Riigihanke viitenumber, ainult numbrid (nt 313120).' },
   { leht: 'Raamleping', väli: 'kehtib_kuni', selgitus: 'Kuupäev kujul pp.kk.aaaa. Tühi tähendab tähtajatut.' },
   { leht: 'Hankeosad', väli: 'kood', selgitus: 'Hankeosa kood, nt OSA-1. Selle järgi hankeosa leitakse või luuakse.' },
   {

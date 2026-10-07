@@ -89,7 +89,7 @@ export function FrameworkIdentityForm({ identity }: { identity: FrameworkIdentit
           label="Riigihanke viitenumber"
           name="procurementReference"
           value={identity.procurementReference}
-          hint="Ainult numbrid, nt 10567384"
+          hint="Ainult numbrid, nt 313120"
           required
         />
         <Field

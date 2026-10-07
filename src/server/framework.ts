@@ -85,7 +85,7 @@ export function updateFrameworkIdentity(ctx: Ctx, input: FrameworkIdentity): boo
   };
   if (!next.title) throw new Error('Raamlepingu nimetus on puudu.');
   if (!/^\d{4,12}$/.test(next.procurementReference)) {
-    throw new Error('Riigihanke viitenumber on number, nt 10567384.');
+    throw new Error('Riigihanke viitenumber on number, nt 313120.');
   }
   if (!next.buyerName) throw new Error('Tellija nimi on puudu.');
 
