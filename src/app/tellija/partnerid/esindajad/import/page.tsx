@@ -128,7 +128,7 @@ export default async function RepresentativesImportPage({
             </thead>
             <tbody>
               {[
-                ['registrikood', 'partneri registrikood, täpselt 8 numbrit; partner peab olema järjestuses'],
+                ['registrikood', 'partneri registrikood nagu järjestuses (8 numbrit või välismaine kood); partner peab olema järjestuses'],
                 ['esindaja', 'isiku nimi, 2–80 tähemärki'],
                 ['e_post', 'isiklik e-posti aadress — sisselogimiseks ja teadeteks'],
                 ['roll', 'esindaja (vaikimisi) või asendaja'],

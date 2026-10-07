@@ -27,10 +27,10 @@ describe('[T-08] hind osaleja kohta', () => {
 
   it('writes the one money sentence exactly, with the labels it is built from', () => {
     const line = priceLine(1270.5, 60.5);
-    expect(line).toContain(HIND.tellimuseMax);
+    expect(line).toContain(HIND.hindKokku);
     expect(line).toMatch(/1\s?270,50/);
     expect(line).toContain('60,50');
-    expect(line).toContain('osalejate arv on ülempiir');
+    expect(line).toContain('osalejate arv on oodatav, mitte ülempiir');
     expect(line).not.toContain('aksumus');
   });
 });

@@ -57,7 +57,7 @@ export async function GET(): Promise<Response> {
       headers: ['Veerg', 'Väärtus'],
       rows: [
         { Veerg: 'partner', Väärtus: 'Abiveerg: partneri nimi. Importimisel ei kasutata.' },
-        { Veerg: 'registrikood', Väärtus: 'Partneri registrikood, täpselt 8 numbrit. Partner peab olema järjestuses.' },
+        { Veerg: 'registrikood', Väärtus: 'Partneri registrikood täpselt nii nagu lehel „Partnerid“ (8 numbrit või välismaine kood). Partner peab olema järjestuses.' },
         { Veerg: 'esindaja', Väärtus: 'Isiku nimi, 2–80 tähemärki.' },
         { Veerg: 'e_post', Väärtus: 'Isiklik e-posti aadress. Sellega logitakse sisse ja sellele lähevad vooru teated.' },
         { Veerg: 'roll', Väärtus: 'esindaja (lepinguline esindaja, vaikimisi) või asendaja.' },

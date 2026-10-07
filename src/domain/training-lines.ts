@@ -7,6 +7,7 @@
  * wording to account without a database.
  */
 
+import { placeText } from './places';
 import { describeGroups, type DateKind, type GroupLike } from './clusters';
 import { formatIsoDay, formatPeriod } from './format';
 
@@ -34,7 +35,7 @@ export interface TrainingLineRow {
 export type ClusterGroups = ReadonlyMap<string, readonly GroupLike[]>;
 
 function place(row: TrainingLineRow): string {
-  return `${row.county}${row.locationText ? `, ${row.locationText}` : ''}`;
+  return placeText(row.county, row.locationText);
 }
 
 /** The dated form — unchanged since v2.6, so stored notices still match. */
@@ -42,7 +43,7 @@ export function fixedTrainingLine(row: TrainingLineRow): string {
   return `${row.code} — ${row.title} · ${formatIsoDay(row.eventDate)} · ${row.workshopTypeLabel} · ${place(row)} · ${row.participantCount} osalejat`;
 }
 
-/** „KL-2026-001 — Töötuba 1 … · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × kuni 50 osalejat (500 kokku)“ */
+/** „KL-2026-001 — Töötuba 1 … · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × 50 osalejat (500 kokku)“ */
 export function clusterLine(rows: readonly TrainingLineRow[], all: readonly GroupLike[]): string {
   const head = rows[0]!;
   const shown: GroupLike[] = rows.map((r) => ({ groupIndex: r.groupIndex ?? 0, participantCount: r.participantCount }));

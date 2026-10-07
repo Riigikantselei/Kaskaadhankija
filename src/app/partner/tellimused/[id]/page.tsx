@@ -7,6 +7,7 @@
  * another partner is a 404, not a leak [N-04].
  */
 
+import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -17,6 +18,7 @@ import { ORDER_STATUS_LABELS, TRAINING_STATUS_LABELS } from '@/domain/round-stat
 import { LANGUAGE_LABELS } from '@/domain/statuses';
 import { StatusBadge } from '@/components/status-badge';
 import { requirePartner } from '@/server/auth/actor';
+import { HIND } from '@/domain/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -123,7 +125,7 @@ export default async function PartnerOrderDetail({ params }: { params: Promise<{
                   <th className="kh-th">Formaat</th>
                   <th className="kh-th">Toimumine</th>
                   <th className="kh-th">Asukoht</th>
-                  <th className="kh-th">Osalejaid</th>
+                  <th className="kh-th">{HIND.osalejateArv}</th>
                   <th className="kh-th">Keel</th>
                   <th className="kh-th">Olek</th>
                   <th className="kh-th">Hind osaleja kohta</th>
@@ -160,8 +162,7 @@ export default async function PartnerOrderDetail({ params }: { params: Promise<{
                         {training.eventEnd && ` – ${formatIsoDay(training.eventEnd)}`}
                       </td>
                       <td className="kh-td text-[13px]">
-                        {training.county}
-                        {training.locationText && `, ${training.locationText}`}
+                        {placeText(training.county, training.locationText)}
                       </td>
                       <td className="kh-td tabular-nums">{training.participantCount}</td>
                       <td className="kh-td text-[13px] whitespace-nowrap">

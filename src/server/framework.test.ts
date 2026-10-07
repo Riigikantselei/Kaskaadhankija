@@ -248,7 +248,7 @@ describe('[L-21] the framework workbook', () => {
     expect(membershipsOf('OSA-1')).toEqual(before);
   });
 
-  it('refuses one address for two companies — it is a sign-in [L-21]', () => {
+  it('lets one address be the contact of two companies in one file [L-08, v2.8]', () => {
     const preview = harness.write((ctx) =>
       previewFrameworkImport(ctx, {
         fileName: 'x.xlsx',
@@ -264,8 +264,27 @@ describe('[L-21] the framework workbook', () => {
         options: { deactivateMissing: false },
       }),
     );
-    expect(preview.canApply).toBe(false);
-    expect(preview.partners.rows[1]?.errors[0]?.message).toMatch(/üks aadress esindab ühte/);
+    expect(preview.partners.rows.flatMap((row) => row.errors)).toEqual([]);
+    expect(preview.canApply).toBe(true);
+    harness.write((ctx) => applyFrameworkImport(ctx, preview.batchId));
+    expect(membershipsOf('OSA-1')).toHaveLength(2);
+  });
+
+  it('takes a foreign member of a joint bid by its own registry code', () => {
+    const preview = harness.write((ctx) =>
+      previewFrameworkImport(ctx, {
+        fileName: 'x.xlsx',
+        fileSize: 1,
+        source: 'upload',
+        sheets: {
+          hankeosad: lotSheet(),
+          partnerid: [rawPartnerRow({ registrikood: '0839665-2', partner: 'Educraftor Oy Ab' })],
+        },
+        options: { deactivateMissing: false },
+      }),
+    );
+    expect(preview.partners.rows[0]?.errors).toEqual([]);
+    expect(preview.partners.rows[0]?.value?.regCode).toBe('0839665-2');
   });
 
   it('refuses a contact who is on the buyer team', () => {

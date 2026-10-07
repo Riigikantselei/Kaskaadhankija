@@ -5,6 +5,7 @@ import { ActionForm } from '@/components/action-form';
 import { StatusBadge } from '@/components/status-badge';
 import type { ImportSummary } from '@/db/schema';
 import { UNIT_WORDS, type RoundKind } from '@/domain/clusters';
+import { HIND } from '@/domain/pricing';
 import {
   confirmRoundImportAction,
   discardRoundImportAction,
@@ -202,7 +203,7 @@ export function RoundImportPreview({
               <th className="kh-th">Koolitus</th>
               <th className="kh-th">Osa</th>
               <th className="kh-th">Toimumine</th>
-              <th className="kh-th">Osalejaid</th>
+              <th className="kh-th">{HIND.osalejateArv}</th>
               <th className="kh-th">Tulemus</th>
             </tr>
           </thead>

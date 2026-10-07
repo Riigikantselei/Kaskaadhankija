@@ -61,7 +61,7 @@ function detailRows(summary: OrderSummaryLines): string {
     ['Koolituse formaat', summary.workshopType],
     ['Kuupäev', summary.eventDates],
     ['Asukoht', summary.location],
-    ['Osalejate arv', String(summary.participantCount)],
+    ['Oodatav osalejate arv', String(summary.participantCount)],
     ['Keel', summary.language],
     ['Hinnanguline maksumus', summary.estimatedValue],
   ];

@@ -60,7 +60,7 @@ export function parseFrameworkSheet(raws: readonly RawRow[]): {
   } else if (!REFERENCE_RE.test(rawReference)) {
     errors.push({
       field: 'viitenumber',
-      message: `riigihanke viitenumber on number, nt 10567384 — saadi „${rawReference}“`,
+      message: `riigihanke viitenumber on number, nt 313120 — saadi „${rawReference}“`,
     });
   }
 

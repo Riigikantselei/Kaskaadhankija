@@ -6,6 +6,7 @@
  * partner's contact or a lot's configuration changes afterwards.
  */
 
+import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { eq } from 'drizzle-orm';
@@ -15,6 +16,7 @@ import { orderTrainings, orders, trainings } from '@/db/schema';
 import { formatDateTimeShort, formatEur, formatIsoDay } from '@/domain/format';
 import { LANGUAGE_LABELS } from '@/domain/statuses';
 import { OrderAdminPanel } from './order-admin-panel';
+import { HIND } from '@/domain/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,7 +104,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                   <th className="kh-th">Formaat</th>
                   <th className="kh-th">Toimumine</th>
                   <th className="kh-th">Asukoht</th>
-                  <th className="kh-th">Osalejaid</th>
+                  <th className="kh-th">{HIND.osalejateArv}</th>
                   <th className="kh-th">Keel</th>
                   <th className="kh-th">Hind osaleja kohta</th>
                 </tr>
@@ -136,8 +138,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                         {training.eventEnd && ` – ${formatIsoDay(training.eventEnd)}`}
                       </td>
                       <td className="kh-td text-[13px]">
-                        {training.county}
-                        {training.locationText && `, ${training.locationText}`}
+                        {placeText(training.county, training.locationText)}
                       </td>
                       <td className="kh-td tabular-nums">{training.participantCount}</td>
                       <td className="kh-td text-[13px] whitespace-nowrap">

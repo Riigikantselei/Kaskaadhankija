@@ -33,6 +33,7 @@
  * replaced contact stay signed in whenever the sheet had once listed them.
  */
 
+import { parseRegCode } from '@/domain/import-rows';
 import { and, desc, eq, inArray, like, ne, or, sql } from 'drizzle-orm';
 import {
   auditEvents,
@@ -84,7 +85,7 @@ export function updateFrameworkIdentity(ctx: Ctx, input: FrameworkIdentity): boo
   };
   if (!next.title) throw new Error('Raamlepingu nimetus on puudu.');
   if (!/^\d{4,12}$/.test(next.procurementReference)) {
-    throw new Error('Riigihanke viitenumber on number, nt 10567384.');
+    throw new Error('Riigihanke viitenumber on number, nt 313120.');
   }
   if (!next.buyerName) throw new Error('Tellija nimi on puudu.');
 
@@ -503,8 +504,9 @@ export function addLotPartner(
 ): string {
   const lot = ctx.tx.select().from(lots).where(eq(lots.id, input.lotId)).get();
   if (!lot) throw new Error('Hankeosa ei leitud.');
-  const regCode = input.regCode.trim();
-  if (!/^\d{8}$/.test(regCode)) throw new Error('Registrikood on 8 numbrit.');
+  const parsedReg = parseRegCode(input.regCode);
+  if (!parsedReg.ok) throw new Error(`Registrikood: ${parsedReg.message}.`);
+  const regCode = parsedReg.value;
   const contactEmail = input.contactEmail.trim().toLowerCase();
   if (!EMAIL_RE.test(contactEmail)) throw new Error('Kontaktisiku e-posti aadress on vigane.');
   const contactName = input.contactName.trim();

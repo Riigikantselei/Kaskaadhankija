@@ -10,7 +10,7 @@ import { formatIsoDay } from '@/domain/format';
 import { TRAINING_COLUMNS, TRAINING_OPTIONAL_COLUMNS } from '@/domain/import-rows';
 import { CAP_OPTIONS_SHEET_WORDS, VISIBILITY_SHEET_WORDS } from '@/domain/round-definition';
 import { TARGET_GROUPS, type CapOptions, type TargetGroup } from '@/domain/round-statuses';
-import { COUNTIES, LANGUAGE_LABELS, WORKSHOP_TYPE_LABELS, type WorkshopType } from '@/domain/statuses';
+import { LANGUAGE_LABELS, WORKSHOP_TYPE_LABELS, type WorkshopType } from '@/domain/statuses';
 import { buildWorkbook, type WorkbookSheet } from './xlsx';
 
 /** What the template needs to know about a training it prefills. */
@@ -158,7 +158,6 @@ export async function buildRoundTemplate(input: RoundTemplateInput): Promise<Buf
     validations: [
       { range: range('hankeosa'), values: input.lotCodes },
       { range: range('formaat'), values: Object.values(WORKSHOP_TYPE_LABELS) },
-      { range: range('maakond'), values: [...COUNTIES] },
       { range: range('sihtruhm'), values: Object.values(TARGET_GROUPS) },
       { range: range('keel'), values: Object.keys(LANGUAGE_LABELS) },
     ],
@@ -180,9 +179,10 @@ export async function buildRoundTemplate(input: RoundTemplateInput): Promise<Buf
       { 'Leht / veerg': 'Koolitused · kood', Tähendus: 'Kujul KK-2026-101 (kindla kuupäevaga koolitus) või KL-2026-001 (klaster — mahuline tellimus). Kood on püsiv tunnus ka uude vooru andmisel. Rühma koodi (KL-2026-001-07) failis ei kirjutata.' },
       { 'Leht / veerg': 'Koolitused · kuupaev', Tähendus: '07.10.2026 või 2026-10-07; lopp_kuupaev mitmepäevase sündmuse puhul. Klastri real jäta tühjaks.' },
       { 'Leht / veerg': 'Koolitused · periood_algus, periood_lopp', Tähendus: 'Ainult klastri real (KL-kood): periood, mille jooksul rühmad toimuvad, nt 01.10.2026 ja 31.12.2026. Toimumisajad rühmade kaupa lepitakse kokku pärast jaotust.' },
-      { 'Leht / veerg': 'Koolitused · osalejate_arv', Tähendus: 'Maksimaalne osalejate arv. Partner näeb „Max osalejaid“ ja hinda rühma täitumisel = see × tema hind osaleja kohta. Klastri real on see kogu klastri osalejate arv (nt 500).' },
+      { 'Leht / veerg': 'Koolitused · osalejate_arv', Tähendus: 'Oodatav (optimaalne) osalejate arv — mitte ülempiir. Partner näeb „Oodatav osalejate arv“ ja hinda oodatava osalejate arvu korral = see × tema hind osaleja kohta. Klastri real on see kogu klastri osalejate arv (nt 500).' },
       { 'Leht / veerg': 'Koolitused · ruhma_suurus, ruhmi', Tähendus: 'Ainult klastri real: rühma suurus (kuni hankeosa rühma ülempiir) ja/või rühmade arv (1–99). Üks neist piisab — teine arvutatakse; viimane rühm kannab jäägi. Klaster loob rakenduses ruhmi rühma, mida partnerid kinnitavad arvuna („võtan kuni 6 rühma“) ja mis jaotatakse klastri kaupa.' },
       { 'Leht / veerg': 'Koolitused · (vooru liik)', Tähendus: 'Ühe mustandi read on ühte liiki: kas kindla kuupäevaga koolitused või klastrid, mitte mõlemad [V-09]. Olemasoleva klastri rida tähistab tema vabu rühmi; rühmade arvu faili kaudu ei muudeta.' },
+      { 'Leht / veerg': 'Koolitused · maakond', Tähendus: 'Maakond (Harju maakond, Harjumaa) või linn (Tallinn, Tartu, Pärnu …) või Veebipõhine. Linn kuvatakse partnerile nii, nagu märgitud; maakond tuletatakse linnast. Linna nimi tähendab linna, maakonna jaoks kirjuta „Pärnu maakond“ või „Pärnumaa“.' },
       { 'Leht / veerg': 'Koolitused · hinnanguline_maksumus', Tähendus: 'Vabatahtlik tellija sisemine hinnang eurodes; partneri vaates ega protokollis seda ei ole.' },
       { 'Leht / veerg': 'Koolitused · formaat', Tähendus: Object.values(WORKSHOP_TYPE_LABELS).join(', ') },
       { 'Leht / veerg': 'Koolitused · sihtruhm', Tähendus: Object.values(TARGET_GROUPS).join(', ') },

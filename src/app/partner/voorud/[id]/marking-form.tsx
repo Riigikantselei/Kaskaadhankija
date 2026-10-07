@@ -22,6 +22,7 @@
  *    the tedium the room complained about; the checkboxes stay for the rest.
  */
 
+import { placeParts, placeText } from '@/domain/places';
 import { useMemo, useState } from 'react';
 import { ActionForm } from '@/components/action-form';
 import { StatusBadge } from '@/components/status-badge';
@@ -254,8 +255,8 @@ export function MarkingForm({
           )}
           <span className="text-[12px] text-[var(--color-muted)]">
             Teie {HIND.osalejaKohta.toLowerCase()}: <strong>{unitPriceText}</strong> — see on teie
-            raamlepingu hind hankepakkumisest ja voorus seda ei muudeta. „{HIND.ruhmaTaitumisel}“ on
-            see korrutatud {isCluster ? 'rühma suurusega' : 'koolituse maksimaalse osalejate arvuga'}. Kui
+            raamlepingu hind hankepakkumisest ja voorus seda ei muudeta. „{HIND.hindOodatavaArvuga}“ on
+            see korrutatud {isCluster ? 'rühma suurusega' : 'koolituse oodatava osalejate arvuga'}. Kui
             hind ei vasta teie pakkumisele, võtke ühendust tellijaga.
           </span>
           {editable && (
@@ -314,14 +315,13 @@ export function MarkingForm({
                     )}
                   </div>
                   <div className="mt-0.5 text-[12.5px] text-[var(--color-muted)]">
-                    {cluster.workshopType} · {cluster.targetGroup} · {cluster.county}
-                    {cluster.locationText && `, ${cluster.locationText}`} · {cluster.periodText} ({cluster.periodDaysText}) ·{' '}
+                    {cluster.workshopType} · {cluster.targetGroup} · {placeText(cluster.county, cluster.locationText)} · {cluster.periodText} ({cluster.periodDaysText}) ·{' '}
                     {cluster.language}
                     {cluster.notes && ` · ${cluster.notes}`}
                   </div>
                   <div className="mt-1 text-[13px]" data-testid="cluster-size">
-                    <strong>{cluster.groupIds.length} rühma</strong> × kuni {cluster.groupSize} osalejat ·{' '}
-                    {cluster.totalParticipants} osalejat kokku · {HIND.ruhmaTaitumisel.toLowerCase()}{' '}
+                    <strong>{cluster.groupIds.length} rühma</strong> × {cluster.groupSize} osalejat ·{' '}
+                    {cluster.totalParticipants} osalejat kokku · {HIND.hindOodatavaArvuga.toLowerCase()}{' '}
                     <strong>{cluster.groupPriceText}</strong>
                   </div>
 
@@ -405,9 +405,9 @@ export function MarkingForm({
                 <th className="kh-th">Koolitus</th>
                 <th className="kh-th">Toimumine</th>
                 <th className="kh-th">Asukoht</th>
-                <th className="kh-th">{HIND.maxOsalejaid}</th>
+                <th className="kh-th">{HIND.osalejateArv}</th>
                 <th className="kh-th">Keel</th>
-                <th className="kh-th">{HIND.ruhmaTaitumisel}</th>
+                <th className="kh-th">{HIND.hindOodatavaArvuga}</th>
                 {dynamic && <th className="kh-th">Olek</th>}
                 {finalMine && <th className="kh-th">Tulemus</th>}
               </tr>
@@ -469,10 +469,10 @@ export function MarkingForm({
                       )}
                     </td>
                     <td className="kh-td text-[13px]">
-                      {training.county}
-                      {training.locationText && (
+                      {placeParts(training.county, training.locationText).main}
+                      {placeParts(training.county, training.locationText).detail && (
                         <div className="text-[12px] text-[var(--color-muted)]">
-                          {training.locationText}
+                          {placeParts(training.county, training.locationText).detail}
                         </div>
                       )}
                     </td>

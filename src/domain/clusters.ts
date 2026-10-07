@@ -84,7 +84,7 @@ export function unitCount(kind: RoundKind, n: number): string {
  * ------------------------------------------------------------------ */
 
 export interface GroupPlan {
-  /** the nominal group size — „× kuni 50 osalejat“ */
+  /** the nominal group size — „× 50 osalejat“ */
   groupSize: number;
   groups: number;
   /** the size of each group, in group order */
@@ -181,12 +181,12 @@ export function totalParticipants(groups: readonly GroupLike[]): number {
 }
 
 /**
- * „10 rühma × kuni 50 osalejat (500 kokku)“ for a whole cluster, or
- * „6 rühma (05–10) × kuni 50 osalejat (300 kokku)“ for a partner's share of it.
+ * „10 rühma × 50 osalejat (500 kokku)“ for a whole cluster, or
+ * „6 rühma (05–10) × 50 osalejat (300 kokku)“ for a partner's share of it.
  */
 export function describeGroups(shown: readonly GroupLike[], all: readonly GroupLike[]): string {
   const size = nominalGroupSize(all.length > 0 ? all : shown);
   const partial = all.length > 0 && shown.length < all.length;
   const range = partial ? ` (${groupIndexRange(shown.map((g) => g.groupIndex))})` : '';
-  return `${shown.length} rühma${range} × kuni ${size} osalejat (${totalParticipants(shown)} kokku)`;
+  return `${shown.length} rühma${range} × ${size} osalejat (${totalParticipants(shown)} kokku)`;
 }

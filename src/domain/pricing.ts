@@ -3,12 +3,13 @@
  *
  * The partner's framework price (`uhikuhind`, `lot_partners.unit_price_eur`) is
  * a price **per participant**, constant per (lot, partner) and different
- * between partners and lots. A training's participant count is a **maximum**.
- * So the only figures the application ever derives are:
+ * between partners and lots. A training's participant count is the **expected**
+ * (optimal) number, not an upper limit. So the only figures the application
+ * ever derives are:
  *
- *  - a training's *hind rühma täitumisel* — max participants × the partner's
- *    price per participant;
- *  - an allocation's *hind max osalejate korral* — the sum of those.
+ *  - a training's *hind oodatava osalejate arvu korral* — expected participants
+ *    × the partner's price per participant;
+ *  - an allocation's *hind kokku oodatava osalejate arvu korral* — the sum of those.
  *
  * The application never computes or shows „maksumus“: what a partner is
  * finally paid follows the framework's terms and actual attendance, outside
@@ -24,9 +25,9 @@ import { formatEurCents } from './format';
 
 export const HIND = {
   osalejaKohta: 'Hind osaleja kohta',
-  maxOsalejaid: 'Max osalejaid',
-  ruhmaTaitumisel: 'Hind rühma täitumisel',
-  tellimuseMax: 'Hind max osalejate korral',
+  osalejateArv: 'Oodatav osalejate arv',
+  hindOodatavaArvuga: 'Hind oodatava osalejate arvu korral',
+  hindKokku: 'Hind kokku oodatava osalejate arvu korral',
   tellijaHinnang: 'Tellija hinnang',
 } as const;
 
@@ -35,12 +36,12 @@ function cents(amount: number): number {
   return Math.round(amount * 100) / 100;
 }
 
-/** Max participants × the partner's price per participant. */
+/** Expected participants × the partner's price per participant. */
 export function trainingMaxPriceEur(participantCount: number, unitPriceEur: number): number {
   return cents(participantCount * unitPriceEur);
 }
 
-/** Σ over trainings of (max participants × price per participant). */
+/** Σ over trainings of (expected participants × price per participant). */
 export function allocationMaxPriceEur(
   lines: ReadonlyArray<{ participantCount: number; unitPriceEur: number }>,
 ): number {
@@ -49,5 +50,5 @@ export function allocationMaxPriceEur(
 
 /** The one sentence a notice or a document says about money. */
 export function priceLine(totalEur: number, unitPriceEur: number): string {
-  return `${HIND.tellimuseMax}: ${formatEurCents(totalEur)} (${HIND.osalejaKohta.toLowerCase()} ${formatEurCents(unitPriceEur)}; osalejate arv on ülempiir).`;
+  return `${HIND.hindKokku}: ${formatEurCents(totalEur)} (${HIND.osalejaKohta.toLowerCase()} ${formatEurCents(unitPriceEur)}; osalejate arv on oodatav, mitte ülempiir).`;
 }
