@@ -303,6 +303,7 @@ export function applyTrainingRows(ctx: Ctx, rows: StoredRow[], batchId: string):
       workshopType: row.value.workshopType,
       eventDate: row.value.eventDate,
       eventEnd: row.value.eventEnd,
+      eventTime: row.value.eventTime,
       // [L-28] a group of a cluster, or a dated training
       dateKind: row.value.dateKind,
       clusterCode: row.value.clusterCode,

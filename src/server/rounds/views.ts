@@ -269,6 +269,7 @@ export interface CalendarEntry {
   title: string;
   eventDate: string;
   eventEnd: string | null;
+  eventTime: string;
   /** [L-28] a cluster's group has a period, not a day */
   dateKind: DateKind;
   clusterCode: string | null;
@@ -313,6 +314,7 @@ export function partnerCalendar(tx: Reader, partnerId: string): CalendarEntry[] 
     title: trainings.title,
     eventDate: trainings.eventDate,
     eventEnd: trainings.eventEnd,
+    eventTime: trainings.eventTime,
     dateKind: trainings.dateKind,
     clusterCode: trainings.clusterCode,
     workshopType: trainings.workshopType,

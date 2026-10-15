@@ -20,6 +20,8 @@ export interface TemplateTraining {
   workshopType: WorkshopType;
   eventDate: string;
   eventEnd: string | null;
+  /** optional time of day, „10:00“ or „10:00–13:00“ */
+  eventTime?: string;
   dateKind: DateKind;
   clusterCode: string | null;
   groupIndex: number | null;
@@ -64,6 +66,7 @@ export function templateRowsFor(available: readonly TemplateTraining[], lotCode:
       formaat: WORKSHOP_TYPE_LABELS[t.workshopType],
       kuupaev: groups ? '' : dotted(t.eventDate),
       lopp_kuupaev: groups ? '' : dotted(t.eventEnd),
+      kellaaeg: groups ? '' : (t.eventTime ?? ''),
       periood_algus: groups ? dotted(t.eventDate) : '',
       periood_lopp: groups ? dotted(t.eventEnd) : '',
       maakond: t.county,
@@ -87,6 +90,7 @@ export const ROUND_TRAINING_HEADERS = [
   'formaat',
   'kuupaev',
   'lopp_kuupaev',
+  'kellaaeg',
   'periood_algus',
   'periood_lopp',
   'maakond',
@@ -178,6 +182,7 @@ export async function buildRoundTemplate(input: RoundTemplateInput): Promise<Buf
       { 'Leht / veerg': 'Koolitused', Tähendus: 'Koolituskalendri impordi veerud. Olemasoleva koodiga rida uuendab koolitust (kui see ei ole juba voorus või määratud); uue koodiga rida loob koolituse. Kõik read lähevad loodavasse vooru.' },
       { 'Leht / veerg': 'Koolitused · kood', Tähendus: 'Kujul KK-2026-101 (kindla kuupäevaga koolitus) või KL-2026-001 (klaster — mahuline tellimus). Kood on püsiv tunnus ka uude vooru andmisel. Rühma koodi (KL-2026-001-07) failis ei kirjutata.' },
       { 'Leht / veerg': 'Koolitused · kuupaev', Tähendus: '07.10.2026 või 2026-10-07; lopp_kuupaev mitmepäevase sündmuse puhul. Klastri real jäta tühjaks.' },
+      { 'Leht / veerg': 'Koolitused · kellaaeg', Tähendus: 'Vabatahtlik: töötoa kellaaeg, kui see on ette teada — nt 10:00 või 10:00–13:00. Tühi = kellaaeg lepitakse kokku täitjaga. Partner näeb seda kuupäeva kõrval („29.10.2026 kell 10:00–13:00“). Klastri real jäta tühjaks.' },
       { 'Leht / veerg': 'Koolitused · periood_algus, periood_lopp', Tähendus: 'Ainult klastri real (KL-kood): periood, mille jooksul rühmad toimuvad, nt 01.10.2026 ja 31.12.2026. Toimumisajad rühmade kaupa lepitakse kokku pärast jaotust.' },
       { 'Leht / veerg': 'Koolitused · osalejate_arv', Tähendus: 'Oodatav (optimaalne) osalejate arv — mitte ülempiir. Partner näeb „Oodatav osalejate arv“ ja hinda oodatava osalejate arvu korral = see × tema hind osaleja kohta. Klastri real on see kogu klastri osalejate arv (nt 500).' },
       { 'Leht / veerg': 'Koolitused · ruhma_suurus, ruhmi', Tähendus: 'Ainult klastri real: rühma suurus (kuni hankeosa rühma ülempiir) ja/või rühmade arv (1–99). Üks neist piisab — teine arvutatakse; viimane rühm kannab jäägi. Klaster loob rakenduses ruhmi rühma, mida partnerid kinnitavad arvuna („võtan kuni 6 rühma“) ja mis jaotatakse klastri kaupa.' },

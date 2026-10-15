@@ -235,3 +235,19 @@ describe('[V-09][L-28] a cluster round from a workbook', () => {
     expect(spent.rows[0]?.errors[0]?.message).toMatch(/kõik 10 rühma on juba voorus või määratud/);
   });
 });
+
+describe('[V-03] a round workbook with a time of day', () => {
+  it('stores the time and writes it back into the template', () => {
+    const result = preview(voor(), [
+      rawTrainingRow({ kood: 'KK-2026-711', kuupaev: '12.10.2026', kellaaeg: '10:00-13:00' }),
+      rawTrainingRow({ kood: 'KK-2026-712', kuupaev: '14.10.2026' }),
+    ]);
+    expect(result.canApply).toBe(true);
+    harness.write((ctx) => applyRoundImport(ctx, result.batchId));
+    const stored = harness.read((db) => db.select().from(trainings).all());
+    expect(stored.find((t) => t.code === 'KK-2026-711')?.eventTime).toBe('10:00–13:00');
+    expect(stored.find((t) => t.code === 'KK-2026-712')?.eventTime).toBe('');
+    const rows = templateRowsFor(stored.map((t) => ({ ...t, notes: t.notes })), 'OSA-1');
+    expect(rows.find((r) => r.kood === 'KK-2026-711')?.kellaaeg).toBe('10:00–13:00');
+  });
+});

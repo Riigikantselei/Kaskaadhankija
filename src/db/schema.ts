@@ -286,6 +286,12 @@ export const trainings = sqliteTable(
     eventDate: text('event_date').notNull(),
     eventEnd: text('event_end'),
     /**
+     * Optional time of day when the buyer knows it: „10:00“ or „10:00–13:00“,
+     * empty when not given. A dated training only; a cluster's groups agree
+     * their times after allocation [L-28].
+     */
+    eventTime: text('event_time').notNull().default(''),
+    /**
      * [L-28] 'fixed' for a dated training; 'period' for one group of a cluster,
      * whose `eventDate`/`eventEnd` are then the period it is delivered in.
      * Validated in code rather than by a CHECK, like `default_cap_options`.

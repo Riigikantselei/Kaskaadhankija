@@ -136,6 +136,7 @@ describe('parseTrainingRows', () => {
       workshopType: 'tootuba_1',
       eventDate: '2026-10-07',
       eventEnd: null,
+      eventTime: '',
       county: 'Tartu maakond',
       locationText: 'Koolitaja ruumid',
       targetGroup: 'kov',

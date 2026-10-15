@@ -21,7 +21,7 @@ import { getDb } from '@/db';
 import { lots, roundTrainings, rounds, trainings } from '@/db/schema';
 import { partnerView } from '@/domain/allocate';
 import { nominalGroupSize, totalParticipants, unitCount } from '@/domain/clusters';
-import { formatDateTime, formatDateTimeShort, formatEurCents, formatIsoDay, formatPeriod, formatTime } from '@/domain/format';
+import { formatDateTime, formatDateTimeShort, formatEurCents, formatIsoDay, formatPeriod, formatTime, timeSuffix } from '@/domain/format';
 import { HIND, trainingMaxPriceEur } from '@/domain/pricing';
 import {
   capLabel,
@@ -105,6 +105,7 @@ export default async function PartnerRoundPage({
       workshopType: trainings.workshopType,
       eventDate: trainings.eventDate,
       eventEnd: trainings.eventEnd,
+      eventTime: trainings.eventTime,
       dateKind: trainings.dateKind,
       clusterCode: trainings.clusterCode,
       groupIndex: trainings.groupIndex,
@@ -455,8 +456,12 @@ export default async function PartnerRoundPage({
             code: row.code,
             title: row.title,
             workshopType: WORKSHOP_TYPE_LABELS[row.workshopType],
-            eventDate: row.dateKind === 'period' ? formatPeriod(row.eventDate, row.eventEnd) : formatIsoDay(row.eventDate),
-            eventEnd: row.dateKind === 'period' ? null : row.eventEnd ? formatIsoDay(row.eventEnd) : null,
+            // the time of day, when known, closes the date: „29.10.2026 kell 10:00–13:00“
+            eventDate:
+              row.dateKind === 'period'
+                ? formatPeriod(row.eventDate, row.eventEnd)
+                : `${formatIsoDay(row.eventDate)}${row.eventEnd ? '' : timeSuffix(row.eventTime)}`,
+            eventEnd: row.dateKind === 'period' ? null : row.eventEnd ? `${formatIsoDay(row.eventEnd)}${timeSuffix(row.eventTime)}` : null,
             county: row.county,
             locationText: row.locationText,
             targetGroup: TARGET_GROUPS[row.targetGroup],

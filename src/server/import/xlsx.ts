@@ -22,6 +22,10 @@ function cellToText(value: ExcelJS.CellValue): string {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) {
     const pad = (n: number) => String(n).padStart(2, '0');
+    // A time-only cell („10:00“) is a date on Excel's day zero, 30.12.1899.
+    if (value.getUTCFullYear() < 1901) {
+      return `${pad(value.getUTCHours())}:${pad(value.getUTCMinutes())}`;
+    }
     return `${pad(value.getUTCDate())}.${pad(value.getUTCMonth() + 1)}.${value.getUTCFullYear()}`;
   }
   if (typeof value === 'object') {

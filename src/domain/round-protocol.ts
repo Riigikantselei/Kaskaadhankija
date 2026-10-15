@@ -89,6 +89,8 @@ export interface ProtocolTraining {
   workshopType: string;
   eventDate: string;
   eventEnd: string | null;
+  /** optional time of day; absent when none was given (and in older protocols) */
+  eventTime?: string;
   county: string;
   locationText: string;
   participantCount: number;

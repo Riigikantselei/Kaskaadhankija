@@ -178,6 +178,39 @@ export function parseRegCode(input: string): FieldResult<string> {
   );
 }
 
+/**
+ * An optional time of day: „10:00“, „10.00“, „9“, „10:00-13:00“, „10:00 – 13:00“,
+ * or the fraction of a day Excel stores for a time cell („0.4166…“). Normalised
+ * to „10:00“ or „10:00–13:00“; empty input is no time.
+ */
+export function parseEventTime(input: string): FieldResult<string> {
+  const text = input.trim();
+  if (!text) return ok('');
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const fromFraction = /^0?[.,]\d+$/.test(text) ? Number(text.replace(',', '.')) : null;
+  if (fromFraction !== null && fromFraction >= 0 && fromFraction < 1) {
+    const minutes = Math.round(fromFraction * 24 * 60);
+    return ok(`${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`);
+  }
+  const one = (part: string): number | null => {
+    const m = /^(\d{1,2})(?:[:.](\d{2}))?$/.exec(part.trim());
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2] ?? '0');
+    return h <= 23 && min <= 59 ? h * 60 + min : null;
+  };
+  const parts = text.replace(/\s*kell\s*/i, '').split(/\s*[-–—]\s*/);
+  if (parts.length > 2) return bad(`kellaaega ei õnnestu lugeda: „${text}“ (nt 10:00 või 10:00–13:00)`);
+  const times = parts.map(one);
+  if (times.some((t) => t === null)) return bad(`kellaaega ei õnnestu lugeda: „${text}“ (nt 10:00 või 10:00–13:00)`);
+  const show = (t: number) => `${pad(Math.floor(t / 60))}:${pad(t % 60)}`;
+  if (times.length === 2) {
+    if (times[1]! <= times[0]!) return bad(`kellaaja lõpp peab olema pärast algust: „${text}“`);
+    return ok(`${show(times[0]!)}–${show(times[1]!)}`);
+  }
+  return ok(show(times[0]!));
+}
+
 /** Accepts '1450', '1 450,00', '1450.00', '1.450,00'. */
 export function parseAmount(input: string, fieldName = 'summa'): FieldResult<number> {
   const text = input.trim();
@@ -232,6 +265,8 @@ export interface TrainingRow {
   /** a day — or, on a cluster row, the start of the period */
   eventDate: string;
   eventEnd: string | null;
+  /** optional time of day, „10:00“ or „10:00–13:00“; empty when not given */
+  eventTime: string;
   county: County;
   locationText: string;
   targetGroup: TargetGroup;
@@ -269,6 +304,7 @@ export const TRAINING_COLUMNS = [
  */
 export const TRAINING_OPTIONAL_COLUMNS = [
   'lopp_kuupaev',
+  'kellaaeg',
   'asukoht',
   'markused',
   'hinnanguline_maksumus',
@@ -419,6 +455,19 @@ export function parseTrainingRows(
       eventDate = take('kuupaev', parseEstonianDate(cells.kuupaev ?? ''));
     }
     const language = take('keel', parseEnum(cells.keel ?? '', LANGUAGE_LABELS, 'keel'));
+    // [V-03] an optional time of day, for a dated training only
+    const rawTime = (cells.kellaaeg ?? '').trim();
+    let eventTime = '';
+    if (rawTime) {
+      if (isCluster) {
+        errors.push({
+          field: 'kellaaeg',
+          message: 'klastri real jäta kellaaeg tühjaks — rühmade ajad lepitakse kokku pärast jaotust',
+        });
+      } else {
+        eventTime = take('kellaaeg', parseEventTime(rawTime)) ?? '';
+      }
+    }
     // The buyer's estimate is optional [L-26]; an empty cell is simply no estimate.
     const estimatedValueEur = (cells.hinnanguline_maksumus ?? '').trim()
       ? take('hinnanguline_maksumus', parseAmount(cells.hinnanguline_maksumus ?? '', 'tellija hinnang'))
@@ -522,6 +571,7 @@ export function parseTrainingRows(
         workshopType,
         eventDate,
         eventEnd,
+        eventTime,
         county,
         locationText,
         targetGroup,

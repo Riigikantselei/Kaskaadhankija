@@ -721,7 +721,7 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
                 {unmarked.map((training) => (
                   <li key={training.id}>
                     <span className="font-semibold">{training.code}</span> ·{' '}
-                    {formatIsoDay(training.eventDate)} · kuni {training.participantCount} osalejat
+                    {formatEventWhen(training)} · oodatavalt {training.participantCount} osalejat
                   </li>
                 ))}
               </ul>
