@@ -45,6 +45,7 @@ import {
   markTrainingCompleted,
   previewFinalAllocation,
   publishRound,
+  recordAllocatedWithdrawal,
   recordPartnerWithdrawal,
   reissueLeftover,
   saveDraftMarks,
@@ -1596,5 +1597,65 @@ describe('[V-09][K-10] klastrivoor', () => {
     const team = noticeBodies('buyer_round_confirmed');
     expect(team[0]!.body).toContain('2 rühma');
     expect(team[0]!.body).toContain('6 rühma');
+  });
+});
+
+describe('[E-07] a partner withdraws from a training allocated in a confirmed round', () => {
+  const confirmed = () => {
+    const roundId = openRound();
+    confirm(roundId, 0, [fx.trainingIds[0], fx.trainingIds[1]]);
+    harness.advance(6 * 86_400_000);
+    harness.write((ctx) => closeRound(ctx, roundId));
+    harness.write((ctx) => confirmAllocation(ctx, roundId));
+    return roundId;
+  };
+
+  it('puts the training back in the round’s leftover, off the partner, with an audit entry and a receipt', () => {
+    const roundId = confirmed();
+    const id = fx.trainingIds[0];
+    expect(trainingRow(id)).toMatchObject({ status: 'allocated', allocatedLotPartnerId: fx.lotPartnerIds[0] });
+    const before = harness.read((db) => workloadFor(db, fx.lotPartnerIds[0]));
+
+    harness.write((ctx) =>
+      recordAllocatedWithdrawal(ctx, id, { note: 'Teatas e-kirjaga, et ei saa läbi viia', noticeDate: '2026-10-05' }),
+    );
+
+    expect(trainingRow(id)).toMatchObject({ status: 'leftover', allocatedLotPartnerId: null, leftoverFromRoundId: roundId });
+    expect(trainingRow(fx.trainingIds[1])).toMatchObject({ status: 'allocated' });
+    expect(harness.read((db) => workloadFor(db, fx.lotPartnerIds[0]))).toBe(before - 1);
+    expect(auditTypes(roundId)).toContain('training.partner_withdrew');
+
+    const receipt = harness.read((db) =>
+      db.select().from(notifications).where(eq(notifications.type, 'withdrawal_recorded')).all(),
+    );
+    expect(receipt).toHaveLength(1);
+    expect(receipt[0]).toMatchObject({ recipientLotPartnerId: fx.lotPartnerIds[0], roundId });
+    expect(receipt[0]!.body).toContain('05.10.2026');
+    // the signed record of the round is not rewritten
+    expect(allocationMap(roundId)[0]).toContain(id);
+  });
+
+  it('lets the same training go into a new round under its own code', () => {
+    confirmed();
+    const id = fx.trainingIds[0];
+    harness.write((ctx) => recordAllocatedWithdrawal(ctx, id, { note: 'Loobus' }));
+    const next = openRound([id]);
+    expect(trainingRow(id)).toMatchObject({ status: 'in_round', currentRoundId: next });
+  });
+
+  it('refuses without a note, for a training that is not allocated, and twice', () => {
+    confirmed();
+    const id = fx.trainingIds[0];
+    expect(() => harness.write((ctx) => recordAllocatedWithdrawal(ctx, id, { note: '  ' }))).toThrow(/märkust/);
+    expect(() =>
+      harness.write((ctx) => recordAllocatedWithdrawal(ctx, id, { note: 'x', noticeDate: '2099-01-01' })),
+    ).toThrow(/tulevikus/);
+    expect(() =>
+      harness.write((ctx) => recordAllocatedWithdrawal(ctx, fx.trainingIds[5], { note: 'x' })),
+    ).toThrow(/ei ole partnerile määratud/);
+    harness.write((ctx) => recordAllocatedWithdrawal(ctx, id, { note: 'Loobus' }));
+    expect(() => harness.write((ctx) => recordAllocatedWithdrawal(ctx, id, { note: 'Loobus' }))).toThrow(
+      /ei ole partnerile määratud/,
+    );
   });
 });

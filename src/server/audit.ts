@@ -43,6 +43,7 @@ export type AuditEventType =
   | 'training.completed'
   | 'training.leftover_reissued'
   | 'training.leftover_cancelled'
+  | 'training.partner_withdrew'
   // participants [E-01]
   | 'participant.excluded'
   // the signable record of an ended round [L-22] — carries its SHA-256

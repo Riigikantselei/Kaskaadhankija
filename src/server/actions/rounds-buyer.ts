@@ -21,6 +21,7 @@ import {
   extendDeadlineByWorkingDays,
   markTrainingCompleted,
   publishRound,
+  recordAllocatedWithdrawal,
   recordPartnerWithdrawal,
   reissueLeftover,
   removeTrainingFromDraft,
@@ -346,6 +347,24 @@ export async function recordPartnerWithdrawalAction(form: FormData): Promise<Act
       DASHBOARD,
     ]);
     return ok('Partneri loobumine on registreeritud ja märgitud järelmenetluseks.');
+  } catch (error) {
+    return fail(describeError(error));
+  }
+}
+
+/** [E-07] The partner gave notice it will not run a training allocated to it. */
+export async function recordAllocatedWithdrawalAction(form: FormData): Promise<ActionOutcome> {
+  const trainingId = fieldText(form, 'trainingId');
+  const roundId = fieldText(form, 'roundId');
+  const note = fieldText(form, 'note');
+  const noticeDate = fieldText(form, 'noticeDate');
+  try {
+    await buyerWrite((ctx) => recordAllocatedWithdrawal(ctx, trainingId, { note, noticeDate }), [
+      ...(roundId ? [`${ROUNDS}/${roundId}`, `${ROUNDS}/${roundId}/ulevaatus`] : []),
+      '/tellija/koolitused',
+      DASHBOARD,
+    ]);
+    return ok('Loobumine on registreeritud: koolitus on jäägis ja partner sai kviitungi. Koolituse saab sama koodiga uude vooru panna.');
   } catch (error) {
     return fail(describeError(error));
   }

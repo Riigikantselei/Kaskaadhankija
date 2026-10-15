@@ -716,7 +716,9 @@ export type NotificationType =
   | 'allocated_elsewhere'
   | 'buyer_round_closed'
   | 'buyer_round_confirmed'
-  | 'late_action_rejected';
+  | 'late_action_rejected'
+  /** [E-07] a partner's withdrawal from an allocated training, on record */
+  | 'withdrawal_recorded';
 
 /**
  * In-app notification log — the primary channel, and the record of what each

@@ -23,6 +23,7 @@ import {
 } from '@/domain/round-statuses';
 import { LANGUAGE_LABELS, WORKSHOP_TYPE_LABELS } from '@/domain/statuses';
 import { StatusBadge } from '@/components/status-badge';
+import { WithdrawalForm } from '../withdrawal-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -247,6 +248,16 @@ export default async function TrainingsPage({
                     {row.allocatedLotPartnerId
                       ? holderNames.get(row.allocatedLotPartnerId) ?? '—'
                       : '—'}
+                    {/* [E-07] the partner gave notice it will not run it */}
+                    {canWrite && row.status === 'allocated' && row.allocatedLotPartnerId && (
+                      <div className="mt-1 min-w-[14rem]">
+                        <WithdrawalForm
+                          trainingId={row.id}
+                          trainingCode={row.code}
+                          partnerName={holderNames.get(row.allocatedLotPartnerId) ?? 'partner'}
+                        />
+                      </div>
+                    )}
                   </td>
                 </tr>
                 </Fragment>

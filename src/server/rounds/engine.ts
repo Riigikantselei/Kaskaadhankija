@@ -18,7 +18,7 @@
  * Rule IDs refer to `docs/kaskaadi-ariloogika.md`.
  */
 
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import {
   buyerAdjustments,
   confirmations,
@@ -67,6 +67,7 @@ import {
   formatEur,
   formatIsoDay,
   formatRemaining,
+  tallinnIsoDay,
 } from '@/domain/format';
 import {
   renderAllocatedElsewhere,
@@ -83,6 +84,7 @@ import {
   renderRoundCancelled,
   renderRoundChanged,
   renderRoundPublished,
+  renderWithdrawalRecorded,
   type ReminderConfirmed,
   type ReminderProjection,
 } from '@/domain/round-templates';
@@ -2067,6 +2069,106 @@ export function cancelOrderTraining(
     trainingId,
     after: { reason: reason.trim() },
   });
+}
+
+/**
+ * [E-07] A partner withdrew from a training allocated to it in a confirmed
+ * round. The decision and the order are made outside the application [L-25],
+ * so the training holds the allocation with no order behind it; this is the
+ * in-app record of the partner's notice.
+ *
+ * The training goes back to the leftover of the round it was allocated in
+ * [T-06], off the partner's calendar and workload, and can be offered again
+ * under the same code. The round's protocol stays as signed — the withdrawal
+ * is its own audited event, flagged for contract follow-up, and the partner
+ * gets a formal receipt. Not undoable: a mistaken record is put right by
+ * offering the training again.
+ */
+export function recordAllocatedWithdrawal(
+  ctx: Ctx,
+  trainingId: string,
+  input: { note: string; noticeDate?: string | null },
+): void {
+  const note = input.note.trim();
+  if (!note) throw new Error('Loobumise märkimine nõuab märkust — nt kuidas ja millal partner teatas.');
+  const noticeDate = input.noticeDate?.trim() || null;
+  if (noticeDate !== null) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(noticeDate)) throw new Error('Teate kuupäev on vigane.');
+    if (noticeDate > tallinnIsoDay(ctx.at)) throw new Error('Teate kuupäev ei saa olla tulevikus.');
+  }
+
+  const training = ctx.tx.select().from(trainings).where(eq(trainings.id, trainingId)).get();
+  if (!training) throw new Error('Koolitust ei leitud.');
+  if (training.status !== 'allocated' || !training.allocatedLotPartnerId) {
+    throw new Error(`Koolitus ${training.code} ei ole partnerile määratud — loobumist ei saa märkida.`);
+  }
+  if (training.orderId) {
+    // A training under an order keeps the order's own record of the withdrawal.
+    recordPartnerWithdrawal(ctx, training.orderId, trainingId, note);
+    return;
+  }
+
+  const lotPartnerId = training.allocatedLotPartnerId;
+  const member = ctx.tx
+    .select({ contactName: lotPartners.contactName, partnerName: partners.name })
+    .from(lotPartners)
+    .innerJoin(partners, eq(partners.id, lotPartners.partnerId))
+    .where(eq(lotPartners.id, lotPartnerId))
+    .get();
+
+  // The confirmed round the training was allocated in.
+  const round = ctx.tx
+    .select({ id: rounds.id, code: rounds.code, lotId: rounds.lotId })
+    .from(roundTrainings)
+    .innerJoin(rounds, eq(rounds.id, roundTrainings.roundId))
+    .where(and(eq(roundTrainings.trainingId, trainingId), eq(rounds.status, 'confirmed')))
+    .orderBy(desc(rounds.confirmedAt))
+    .get();
+
+  ctx.tx
+    .update(trainings)
+    .set({
+      status: 'leftover',
+      allocatedLotPartnerId: null,
+      currentRoundId: null,
+      leftoverFromRoundId: round?.id ?? training.leftoverFromRoundId,
+      updatedAt: ctx.at,
+    })
+    .where(eq(trainings.id, trainingId))
+    .run();
+
+  const noticeDateText = noticeDate ? formatIsoDay(noticeDate) : undefined;
+  logAudit(ctx, {
+    eventType: 'training.partner_withdrew',
+    summary: `${member?.partnerName ?? 'Partner'} loobus pärast jaotuse kinnitamist koolitusest ${training.code}${
+      noticeDateText ? ` (teade ${noticeDateText})` : ''
+    }: ${note} — koolitus on jäägis, vajab lepingulist järelmenetlust`,
+    trainingId,
+    roundId: round?.id,
+    lotId: training.lotId,
+    lotPartnerId,
+    after: { note, noticeDate, lotPartnerId, roundId: round?.id ?? null },
+  });
+
+  if (round) {
+    const lot = loadLot(ctx, round.lotId);
+    notify(ctx, {
+      recipientKind: 'partner',
+      recipientLotPartnerId: lotPartnerId,
+      type: 'withdrawal_recorded',
+      roundId: round.id,
+      emailTo: partnerRecipients(ctx.tx, lotPartnerId),
+      notice: renderWithdrawalRecorded({
+        framework: frameworkIdentity(ctx.tx),
+        roundCode: round.code,
+        lotLabel: lotLabel(lot),
+        url: partnerUrl(round.id),
+        contactName: member?.contactName ?? '',
+        trainingLines: trainingLines(ctx, [trainingId], round.id),
+        noticeDateText,
+      }),
+    });
+  }
 }
 
 /**
