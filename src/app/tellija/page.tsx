@@ -68,6 +68,7 @@ export default async function BuyerDashboard() {
       title: trainings.title,
       eventDate: trainings.eventDate,
       eventEnd: trainings.eventEnd,
+      eventTime: trainings.eventTime,
       dateKind: trainings.dateKind,
       county: trainings.county,
       estimatedValueEur: trainings.estimatedValueEur,

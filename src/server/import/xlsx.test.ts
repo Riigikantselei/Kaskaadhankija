@@ -107,3 +107,16 @@ describe('a workbook another program saved with a namespace prefix', () => {
     await expect(parseXlsxSheets(Buffer.from('see ei ole töövihik'))).rejects.toThrow();
   });
 });
+
+describe('a time-only cell', () => {
+  it('reads back as a time of day, not Excel’s day zero', async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Koolitused');
+    sheet.addRow(['kood', 'kellaaeg']);
+    sheet.addRow(['KK-2026-050', new Date(Date.UTC(1899, 11, 30, 10, 0))]);
+    sheet.getCell('B2').numFmt = 'hh:mm';
+    const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+    const sheets = await parseXlsxSheets(buffer);
+    expect(sheets.get('Koolitused')?.rows).toEqual([{ kood: 'KK-2026-050', kellaaeg: '10:00' }]);
+  });
+});

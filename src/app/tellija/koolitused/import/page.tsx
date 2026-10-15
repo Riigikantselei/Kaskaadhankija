@@ -123,6 +123,7 @@ export default async function TrainingsImportPage({
                 ['formaat', true, Object.values(WORKSHOP_TYPE_LABELS).join(', ')],
                 ['kuupaev', true, '07.10.2026 või 2026-10-07; klastri real tühi'],
                 ['lopp_kuupaev', false, 'mitmepäevase sündmuse lõpp'],
+                ['kellaaeg', false, 'vabatahtlik kellaaeg, kui see on ette teada: 10:00 või 10:00–13:00; klastri real tühi'],
                 ['periood_algus, periood_lopp', false, 'ainult klastri real (KL-kood): periood, mille jooksul rühmad toimuvad'],
                 ['maakond', true, 'maakond (nt Harju maakond, Harjumaa) või linn (nt Tallinn — kuvatakse nii, nagu märgitud), või Veebipõhine'],
                 ['asukoht', false, 'täpsem asukoht või platvorm'],

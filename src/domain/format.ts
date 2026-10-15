@@ -108,9 +108,17 @@ export function formatEventWhen(row: {
   dateKind?: 'fixed' | 'period' | null;
   eventDate: string;
   eventEnd?: string | null;
+  /** optional time of day, „10:00“ or „10:00–13:00“ */
+  eventTime?: string | null;
 }): string {
   if (row.dateKind === 'period') return formatPeriod(row.eventDate, row.eventEnd ?? null);
-  return row.eventEnd ? `${formatIsoDay(row.eventDate)} – ${formatIsoDay(row.eventEnd)}` : formatIsoDay(row.eventDate);
+  const days = row.eventEnd ? `${formatIsoDay(row.eventDate)} – ${formatIsoDay(row.eventEnd)}` : formatIsoDay(row.eventDate);
+  return `${days}${timeSuffix(row.eventTime)}`;
+}
+
+/** „ kell 10:00–13:00“, or nothing when no time is known. */
+export function timeSuffix(eventTime: string | null | undefined): string {
+  return eventTime ? ` kell ${eventTime}` : '';
 }
 
 /**

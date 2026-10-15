@@ -9,7 +9,7 @@
 
 import { placeText } from './places';
 import { describeGroups, type DateKind, type GroupLike } from './clusters';
-import { formatIsoDay, formatPeriod } from './format';
+import { formatIsoDay, formatPeriod, timeSuffix } from './format';
 
 export interface TrainingLineRow {
   id: string;
@@ -18,6 +18,8 @@ export interface TrainingLineRow {
   dateKind: DateKind;
   eventDate: string;
   eventEnd: string | null;
+  /** optional time of day — absent in notices stored before it existed */
+  eventTime?: string;
   clusterCode: string | null;
   groupIndex: number | null;
   /** the Estonian label, not the key */
@@ -40,7 +42,7 @@ function place(row: TrainingLineRow): string {
 
 /** The dated form — unchanged since v2.6, so stored notices still match. */
 export function fixedTrainingLine(row: TrainingLineRow): string {
-  return `${row.code} — ${row.title} · ${formatIsoDay(row.eventDate)} · ${row.workshopTypeLabel} · ${place(row)} · ${row.participantCount} osalejat`;
+  return `${row.code} — ${row.title} · ${formatIsoDay(row.eventDate)}${timeSuffix(row.eventTime)} · ${row.workshopTypeLabel} · ${place(row)} · ${row.participantCount} osalejat`;
 }
 
 /** „KL-2026-001 — Töötuba 1 … · okt–dets 2026 · Töötuba 1 · Harju maakond · 10 rühma × 50 osalejat (500 kokku)“ */

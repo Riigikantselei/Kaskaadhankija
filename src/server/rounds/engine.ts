@@ -182,6 +182,7 @@ function lineRow(row: TrainingRow): TrainingLineRow {
     dateKind: row.dateKind,
     eventDate: row.eventDate,
     eventEnd: row.eventEnd,
+    eventTime: row.eventTime,
     clusterCode: row.clusterCode,
     groupIndex: row.groupIndex,
     workshopTypeLabel: WORKSHOP_TYPE_LABELS[row.workshopType],

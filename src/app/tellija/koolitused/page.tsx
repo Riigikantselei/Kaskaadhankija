@@ -53,6 +53,7 @@ export default async function TrainingsPage({
       workshopType: trainings.workshopType,
       eventDate: trainings.eventDate,
       eventEnd: trainings.eventEnd,
+      eventTime: trainings.eventTime,
       dateKind: trainings.dateKind,
       clusterCode: trainings.clusterCode,
       groupIndex: trainings.groupIndex,
