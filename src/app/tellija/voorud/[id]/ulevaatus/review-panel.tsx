@@ -20,6 +20,7 @@ import {
   clearAdjustmentAction,
   confirmAllocationAction,
 } from '@/server/actions/rounds-buyer';
+import { WithdrawalForm } from '../../../withdrawal-form';
 
 export interface ReviewRow {
   lotPartnerId: string;
@@ -32,6 +33,11 @@ export interface ReviewRow {
   capKind: 'trainings' | 'participants';
   proposedCount: number;
   finalTrainings: Array<{
+    /** absent on rows built before the withdrawal action existed */
+    id?: string;
+    /** [E-07] false once the partner's withdrawal is on record */
+    held?: boolean;
+    statusLabel?: string;
     code: string;
     title: string;
     eventDate: string;
@@ -295,6 +301,7 @@ export function ReviewPanel({
                   <th className="kh-th">Maakond, asukoht</th>
                   <th className="kh-th">Sihtrühm</th>
                   <th className="kh-th">{HIND.osalejateArv}</th>
+                  {confirmed && <th className="kh-th">Partneri loobumine</th>}
                 </tr>
               </thead>
               <tbody>
@@ -313,6 +320,24 @@ export function ReviewPanel({
                         <td className="kh-td text-[13px]">{t.place}</td>
                         <td className="kh-td text-[13px]">{t.targetGroup}</td>
                         <td className="kh-td tabular-nums">{t.participantCount}</td>
+                        {confirmed && (
+                          <td className="kh-td min-w-[14rem] text-[13px]">
+                            {t.held === false ? (
+                              <span style={{ color: 'var(--color-danger)' }}>
+                                Partner loobus — praegu: {t.statusLabel}
+                              </span>
+                            ) : canWrite && t.id ? (
+                              <WithdrawalForm
+                                trainingId={t.id}
+                                trainingCode={t.code}
+                                partnerName={row.partnerName}
+                                roundId={roundId}
+                              />
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                        )}
                       </tr>
                     )),
                   )}

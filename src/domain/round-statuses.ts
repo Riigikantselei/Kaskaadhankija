@@ -325,6 +325,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   buyer_round_closed: 'Voor sulgus',
   buyer_round_confirmed: 'Jaotus kinnitatud',
   late_action_rejected: 'Hilinenud toiming',
+  withdrawal_recorded: 'Loobumine registreeritud',
 };
 
 export type NoticeCategory = 'formal' | 'informational';
@@ -354,6 +355,7 @@ export const NOTICE_CATEGORY: Record<NotificationType, NoticeCategory> = {
   buyer_round_closed: 'formal',
   buyer_round_confirmed: 'formal',
   late_action_rejected: 'formal',
+  withdrawal_recorded: 'formal',
 };
 
 /** The informational notices, named for a reader [L-27]. */

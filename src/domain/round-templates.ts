@@ -419,6 +419,32 @@ export function renderAllocatedElsewhere(
   );
 }
 
+/**
+ * [E-07] The partner's withdrawal from an allocated training is on record. A
+ * formal receipt, so the partner holds the same evidence the buyer does.
+ */
+export function renderWithdrawalRecorded(
+  input: Omit<RoundNoticeBase, 'deadlineText'> & {
+    contactName: string;
+    trainingLines: string[];
+    /** the day the partner gave notice, dd.mm.yyyy — absent when not recorded */
+    noticeDateText?: string;
+  },
+): RenderedNotice {
+  return composeNotice(
+    `Loobumine registreeritud — voor ${input.roundCode}`,
+    [
+      `Lugupeetud ${input.contactName}`,
+      input.noticeDateText
+        ? `Registreerisime teie ${input.noticeDateText} esitatud teate, et loobute järgmisest voorus ${input.roundCode} (${input.lotLabel}) teile määratud koolitusest:`
+        : `Registreerisime teie teate, et loobute järgmisest voorus ${input.roundCode} (${input.lotLabel}) teile määratud koolitusest:`,
+      list(input.trainingLines),
+      'Koolitus ei ole enam teie nimel. Tellija pakub selle uues voorus raamlepingu partneritele ja võtab vajaduse korral lepingu täitmise küsimuses teiega ühendust.',
+    ],
+    { url: input.url, label: 'Ava voor' },
+  );
+}
+
 /* ------------------------------------------------------------------ *
  * internal notices to the buyer team
  * ------------------------------------------------------------------ */

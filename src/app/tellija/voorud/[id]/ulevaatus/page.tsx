@@ -20,7 +20,7 @@ import { lots, orders, rounds, trainings } from '@/db/schema';
 import { WORKSHOP_TYPE_LABELS } from '@/domain/statuses';
 import { formatDateTimeShort, formatEur, formatEventWhen, formatEurCents } from '@/domain/format';
 import { allocationMaxPriceEur } from '@/domain/pricing';
-import { PARTICIPANT_OUTCOME_LABELS, ROUND_STATUS_LABELS, ROUND_STATUS_TONES, TARGET_GROUPS } from '@/domain/round-statuses';
+import { PARTICIPANT_OUTCOME_LABELS, ROUND_STATUS_LABELS, ROUND_STATUS_TONES, TARGET_GROUPS, TRAINING_STATUS_LABELS } from '@/domain/round-statuses';
 import { RankChip, StatusBadge } from '@/components/status-badge';
 import { effectiveAdjustmentRows } from '@/server/rounds/allocation-input';
 import { previewFinalAllocation } from '@/server/rounds/engine';
@@ -120,6 +120,10 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
         .filter((t): t is NonNullable<typeof t> => Boolean(t))
         .sort((a, b) => a.eventDate.localeCompare(b.eventDate) || a.code.localeCompare(b.code))
         .map((t) => ({
+          id: t.id,
+          // [E-07] still on this partner's name — not withdrawn since the confirmation
+          held: t.status === 'allocated' && t.allocatedLotPartnerId === participant.lotPartnerId,
+          statusLabel: TRAINING_STATUS_LABELS[t.status],
           code: t.code,
           title: t.title,
           eventDate: formatEventWhen(t),
