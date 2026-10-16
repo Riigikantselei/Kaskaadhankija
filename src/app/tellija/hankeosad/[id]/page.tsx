@@ -16,7 +16,7 @@ import { ReadOnlyNote } from '@/components/read-only-note';
 import { lotPartners, lots, partners, rounds } from '@/db/schema';
 import { formatEur } from '@/domain/format';
 import { RankChip, StatusBadge } from '@/components/status-badge';
-import { workloadFor } from '@/server/rounds/views';
+import { completedFor, workloadFor } from '@/server/rounds/views';
 import { LotConfigForm, PartnerRows } from './lot-forms';
 
 export const dynamic = 'force-dynamic';
@@ -115,6 +115,7 @@ export default async function LotDetail({ params }: { params: Promise<{ id: stri
                   ...member,
                   unitPriceText: formatEur(member.unitPriceEur),
                   workload: workloadFor(db, member.lotPartnerId),
+                  completed: completedFor(db, member.lotPartnerId),
                 }))}
               />
             </tbody>

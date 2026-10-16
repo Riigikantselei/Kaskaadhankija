@@ -317,6 +317,18 @@ export const trainings = sqliteTable(
     allocatedLotPartnerId: text('allocated_lot_partner_id'),
     orderId: text('order_id'),
     completedAt: integer('completed_at'),
+    /**
+     * [E-11] The workshop's acceptance act: „Töövõtja on töö üle andnud ja
+     * tellija vastu võtnud.“ Each side ticks its half, in either order; with
+     * both, the training is completed. A buyer's refusal clears both halves
+     * and keeps its reason until the partner ticks again.
+     */
+    actPartnerAt: integer('act_partner_at'),
+    actPartnerBy: text('act_partner_by').notNull().default(''),
+    actBuyerAt: integer('act_buyer_at'),
+    actBuyerBy: text('act_buyer_by').notNull().default(''),
+    actRejectedAt: integer('act_rejected_at'),
+    actRejectReason: text('act_reject_reason').notNull().default(''),
     cancelledAt: integer('cancelled_at'),
     cancelReason: text('cancel_reason').notNull().default(''),
     /** provenance of an imported row */
@@ -724,7 +736,12 @@ export type NotificationType =
   | 'buyer_round_confirmed'
   | 'late_action_rejected'
   /** [E-07] a partner's withdrawal from an allocated training, on record */
-  | 'withdrawal_recorded';
+  | 'withdrawal_recorded'
+  /** [E-11] the acceptance act of a held workshop */
+  | 'act_partner_marked'
+  | 'act_buyer_marked'
+  | 'act_completed'
+  | 'act_rejected';
 
 /**
  * In-app notification log — the primary channel, and the record of what each

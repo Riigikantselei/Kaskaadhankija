@@ -127,6 +127,13 @@
       "when": 1792070380798,
       "tag": "0017_event_time",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1792138908258,
+      "tag": "0018_training_act",
+      "breakpoints": true
     }
   ]
 }

@@ -446,6 +446,79 @@ export function renderWithdrawalRecorded(
 }
 
 /* ------------------------------------------------------------------ *
+ * [E-11] the workshop's acceptance act
+ * ------------------------------------------------------------------ */
+
+/** The sentence both sides tick — the act itself. */
+export const ACT_SENTENCE = 'Töövõtja on töö üle andnud ja tellija vastu võtnud.';
+
+interface ActNoticeBase {
+  framework: FrameworkIdentity;
+  url: string;
+  trainingLines: string[];
+}
+
+/** To the buyer team: the partner ticked „töö üle antud“. */
+export function renderActPartnerMarked(input: ActNoticeBase & { partnerName: string; markedBy: string }): RenderedNotice {
+  return composeNotice(
+    `Töö üle antud — ${input.partnerName}`,
+    [
+      `${input.partnerName} (${input.markedBy}) märkis töötoa toimumise aktis, et töö on üle antud:`,
+      list(input.trainingLines),
+      'Palun kinnitage lehel „Koolitused“ „Vastu võetud“ või lükake akt põhjendusega tagasi.',
+    ],
+    { url: input.url, label: 'Ava koolitused' },
+    input.framework,
+  );
+}
+
+/** To the partner: the buyer ticked „vastu võetud“ first — the partner's half is still open. */
+export function renderActBuyerMarked(input: ActNoticeBase & { contactName: string }): RenderedNotice {
+  return composeNotice(
+    'Tellija võttis töö vastu — palun kinnitage üleandmine',
+    [
+      `Lugupeetud ${input.contactName}`,
+      'Tellija märkis töötoa toimumise aktis töö vastuvõetuks:',
+      list(input.trainingLines),
+      'Akti lõpetamiseks märkige „Minu kalendris“ „Töö üle antud“.',
+    ],
+    { url: input.url, label: 'Ava kalender' },
+    input.framework,
+  );
+}
+
+/** To the partner: both halves are ticked — the act stands. */
+export function renderActCompleted(input: ActNoticeBase & { contactName: string }): RenderedNotice {
+  return composeNotice(
+    'Töötoa toimumise akt on kinnitatud',
+    [
+      `Lugupeetud ${input.contactName}`,
+      `${ACT_SENTENCE} Akt on kinnitatud mõlema poole märkega:`,
+      list(input.trainingLines),
+      'Akti saab „Minu kalendrist“ alla laadida PDF-ina.',
+    ],
+    { url: input.url, label: 'Ava kalender' },
+    input.framework,
+  );
+}
+
+/** To the partner: the buyer did not accept — the reason, and what to do. */
+export function renderActRejected(input: ActNoticeBase & { contactName: string; reason: string }): RenderedNotice {
+  return composeNotice(
+    'Tellija ei võtnud tööd vastu',
+    [
+      `Lugupeetud ${input.contactName}`,
+      'Tellija lükkas töötoa toimumise akti tagasi:',
+      list(input.trainingLines),
+      `Põhjus: ${input.reason}`,
+      'Kui küsimus on lahendatud, märkige „Minu kalendris“ uuesti „Töö üle antud“.',
+    ],
+    { url: input.url, label: 'Ava kalender' },
+    input.framework,
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * internal notices to the buyer team
  * ------------------------------------------------------------------ */
 

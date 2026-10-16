@@ -52,6 +52,8 @@ export interface ReviewRow {
   finalCount: number;
   valueText: string;
   workload: number;
+  /** [L-07] trainings already run — past work, outside the workload */
+  completed?: number;
   overThreshold: boolean;
   adjustment: { kind: 'skip' | 'cap'; cap: number | null; justification: string } | null;
 }
@@ -210,6 +212,9 @@ export function ReviewPanel({
                       <div className="text-[11px]" style={{ color: 'var(--color-warning)' }}>
                         piir täis
                       </div>
+                    )}
+                    {row.completed !== undefined && (
+                      <div className="text-[11px] text-[var(--color-muted)]">{row.completed} läbi viidud</div>
                     )}
                   </td>
                   {!confirmed && (

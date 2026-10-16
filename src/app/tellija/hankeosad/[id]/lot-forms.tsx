@@ -195,6 +195,7 @@ export function PartnerRows({
     contactEmail: string;
     unitPriceText: string;
     workload: number;
+    completed: number;
   }>;
 }) {
   return (
@@ -220,6 +221,7 @@ export function PartnerRows({
             >
               {row.workload}
             </span>
+            <div className="text-[11px] text-[var(--color-muted)]">{row.completed} läbi viidud</div>
           </td>
           <td className="kh-td whitespace-nowrap">
             {row.isActive ? (
