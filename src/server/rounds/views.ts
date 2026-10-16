@@ -419,6 +419,19 @@ export function workloadFor(tx: Reader, lotPartnerId: string): number {
     .all().length;
 }
 
+/**
+ * [E-11][L-07] How many trainings a lot member has run — completed, by the
+ * acceptance act or on an order. Shown beside the workload as the record of
+ * past work; never part of the workload or its threshold.
+ */
+export function completedFor(tx: Reader, lotPartnerId: string): number {
+  return tx
+    .select({ id: trainings.id })
+    .from(trainings)
+    .where(and(eq(trainings.allocatedLotPartnerId, lotPartnerId), eq(trainings.status, 'completed')))
+    .all().length;
+}
+
 /** The wording shown next to a workload figure, so screens agree. */
 export function workloadLabel(count: number, threshold: number): string {
   return count >= threshold

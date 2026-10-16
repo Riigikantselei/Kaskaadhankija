@@ -24,7 +24,7 @@ import { PARTICIPANT_OUTCOME_LABELS, ROUND_STATUS_LABELS, ROUND_STATUS_TONES, TA
 import { RankChip, StatusBadge } from '@/components/status-badge';
 import { effectiveAdjustmentRows } from '@/server/rounds/allocation-input';
 import { previewFinalAllocation } from '@/server/rounds/engine';
-import { latestConfirmation, participantsOf, workloadFor } from '@/server/rounds/views';
+import { completedFor, latestConfirmation, participantsOf, workloadFor } from '@/server/rounds/views';
 import { ReviewPanel } from './review-panel';
 
 export const dynamic = 'force-dynamic';
@@ -98,6 +98,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       [];
     const adjustment = adjustmentRows.find((a) => a.lotPartnerId === participant.lotPartnerId);
     const workload = workloadFor(db, participant.lotPartnerId);
+    const completed = completedFor(db, participant.lotPartnerId);
     // [T-08] the partner's own price per participant × max participants — not the buyer's estimate
     const value = allocationMaxPriceEur(
       final.map((trainingId) => ({
@@ -137,6 +138,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       finalCount: final.length,
       valueText: formatEurCents(value),
       workload,
+      completed,
       overThreshold: workload >= round.workloadThresholdSnapshot,
       adjustment: adjustment
         ? {

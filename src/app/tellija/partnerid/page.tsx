@@ -7,7 +7,7 @@ import { buyerIsAdmin } from '@/server/auth/actor';
 import { ReadOnlyNote } from '@/components/read-only-note';
 import { lotPartners, lots, partners } from '@/db/schema';
 import { StatusBadge } from '@/components/status-badge';
-import { workloadFor } from '@/server/rounds/views';
+import { completedFor, workloadFor } from '@/server/rounds/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +80,7 @@ export default async function PartnersPage() {
                   (sum, m) => sum + workloadFor(db, m.lotPartnerId),
                   0,
                 );
+                const completed = mine.reduce((sum, m) => sum + completedFor(db, m.lotPartnerId), 0);
                 return (
                   <tr key={partner.id}>
                     <td className="kh-td">
@@ -121,7 +122,10 @@ export default async function PartnersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="kh-td tabular-nums">{workload}</td>
+                    <td className="kh-td tabular-nums">
+                      {workload}
+                      <div className="text-[11px] text-[var(--color-muted)]">{completed} läbi viidud</div>
+                    </td>
                   </tr>
                 );
               })}

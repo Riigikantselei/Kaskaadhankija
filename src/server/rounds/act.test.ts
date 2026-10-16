@@ -9,6 +9,7 @@ import { auditEvents, notifications, trainings } from '@/db/schema';
 import { closeRound, confirmAllocation, confirmMarks, createRound, publishRound } from './engine';
 import { markActByBuyer, markActByPartner, partnerHoldsTraining, rejectAct } from './act';
 import { actDocument, renderActPdf } from '../documents/act-pdf';
+import { completedFor, workloadFor } from './views';
 import { createHarness, seedLotWithPartners, type LotFixture, type TestHarness } from '../test-support';
 
 let harness: TestHarness;
@@ -65,6 +66,16 @@ describe('[E-11] the workshop acceptance act', () => {
     expect(noticeTypes()).toContain('act_buyer_marked');
     expect(harness.write((ctx) => markActByPartner(ctx, id, fx.partnerIds[0]!))).toEqual({ completed: true });
     expect(training(id).status).toBe('completed');
+  });
+
+  it('[L-07] a completed training leaves the current workload and counts as läbi viidud', () => {
+    const id = fx.trainingIds[0]!;
+    const lotPartnerId = training(id).allocatedLotPartnerId!;
+    expect(harness.read((db) => [workloadFor(db, lotPartnerId), completedFor(db, lotPartnerId)])).toEqual([3, 0]);
+    afterEvent(id);
+    harness.write((ctx) => markActByPartner(ctx, id, fx.partnerIds[0]!));
+    harness.write((ctx) => markActByBuyer(ctx, id));
+    expect(harness.read((db) => [workloadFor(db, lotPartnerId), completedFor(db, lotPartnerId)])).toEqual([2, 1]);
   });
 
   it('only the company that holds the training can tick the partner half, once', () => {
