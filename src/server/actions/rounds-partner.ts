@@ -11,6 +11,7 @@
 import { redirect } from 'next/navigation';
 import type { CapKind } from '@/domain/allocate';
 import { confirmMarks, declineAll, saveDraftMarks, type MarksInput } from '../rounds/engine';
+import { markActByPartner } from '../rounds/act';
 import { adminWrite, describeError, fail, fieldList, fieldNumber, fieldText, ok, partnerWrite, type ActionOutcome } from './helpers';
 
 const ROUNDS = '/partner/voorud';
@@ -117,6 +118,19 @@ export async function markNotificationReadAction(form: FormData): Promise<Action
       [asBuyer ? '/tellija/teavitused' : '/partner/teavitused'],
     );
     return ok('Märgitud loetuks.');
+  } catch (error) {
+    return fail(describeError(error));
+  }
+}
+
+/** [E-11] The partner's half of the acceptance act: „töö üle antud“. */
+export async function markActByPartnerAction(form: FormData): Promise<ActionOutcome> {
+  const trainingId = fieldText(form, 'trainingId');
+  try {
+    const { completed } = await partnerWrite((ctx, actor) => markActByPartner(ctx, trainingId, actor.partnerId), [
+      '/partner/kalender',
+    ]);
+    return ok(completed ? 'Akt on kinnitatud mõlema poole märkega.' : 'Töö üleandmine märgitud. Akt jõustub, kui tellija märgib vastuvõtu.');
   } catch (error) {
     return fail(describeError(error));
   }

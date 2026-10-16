@@ -11,7 +11,9 @@
 import { placeText } from '@/domain/places';
 import Link from 'next/link';
 import { getDb } from '@/db';
-import { formatEventWhen, formatMonthLabel, monthKey } from '@/domain/format';
+import { formatDateTimeShort, formatEventWhen, formatIsoDay, formatMonthLabel, monthKey, tallinnIsoDay } from '@/domain/format';
+import { currentTimeMs } from '@/server/clock';
+import { PartnerActControls } from './act-controls';
 import { WORKSHOP_TYPE_LABELS } from '@/domain/statuses';
 import { StatusBadge } from '@/components/status-badge';
 import { requirePartner } from '@/server/auth/actor';
@@ -30,6 +32,7 @@ export default async function PartnerCalendarPage() {
   const actor = await requirePartner();
   runDueJobs();
   const entries = partnerCalendar(getDb(), actor.partnerId);
+  const today = tallinnIsoDay(currentTimeMs());
 
   const months = new Map<string, CalendarEntry[]>();
   for (const entry of entries) {
@@ -80,6 +83,22 @@ export default async function PartnerCalendarPage() {
                         </Link>
                       )}
                     </span>
+                    {entry.act && (
+                      <div className="basis-full">
+                        <PartnerActControls
+                          act={{
+                            trainingId: entry.trainingId,
+                            code: entry.code,
+                            completed: entry.kind === 'completed',
+                            due: entry.eventDate <= today,
+                            dueText: formatIsoDay(entry.eventDate),
+                            partnerText: entry.act.partnerAt ? `${formatDateTimeShort(entry.act.partnerAt)} · ${entry.act.partnerBy}` : null,
+                            buyerText: entry.act.buyerAt ? `${formatDateTimeShort(entry.act.buyerAt)} · ${entry.act.buyerBy}` : null,
+                            rejectReason: entry.act.rejectReason,
+                          }}
+                        />
+                      </div>
+                    )}
                   </li>
                 );
               })}

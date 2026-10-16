@@ -14,7 +14,7 @@ import { getDb } from '@/db';
 import { buyerCanWrite } from '@/server/auth/actor';
 import { lots, partners, lotPartners, trainings } from '@/db/schema';
 import { describeGroups } from '@/domain/clusters';
-import { formatEur, formatEventWhen, formatMonthLabel, formatPeriod, monthKey } from '@/domain/format';
+import { formatDateTimeShort, formatEur, formatEventWhen, formatIsoDay, formatMonthLabel, formatPeriod, monthKey, tallinnIsoDay } from '@/domain/format';
 import {
   TARGET_GROUPS,
   TRAINING_STATUS_LABELS,
@@ -24,6 +24,8 @@ import {
 import { LANGUAGE_LABELS, WORKSHOP_TYPE_LABELS } from '@/domain/statuses';
 import { StatusBadge } from '@/components/status-badge';
 import { WithdrawalForm } from '../withdrawal-form';
+import { BuyerActControls } from '../act-controls';
+import { currentTimeMs } from '@/server/clock';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +46,7 @@ export default async function TrainingsPage({
   const params = await searchParams;
   const db = getDb();
   const canWrite = await buyerCanWrite();
+  const today = tallinnIsoDay(currentTimeMs());
 
   const rows = db
     .select({
@@ -64,6 +67,11 @@ export default async function TrainingsPage({
       estimatedValueEur: trainings.estimatedValueEur,
       status: trainings.status,
       allocatedLotPartnerId: trainings.allocatedLotPartnerId,
+      actPartnerAt: trainings.actPartnerAt,
+      actPartnerBy: trainings.actPartnerBy,
+      actBuyerAt: trainings.actBuyerAt,
+      actBuyerBy: trainings.actBuyerBy,
+      actRejectReason: trainings.actRejectReason,
       lotCode: lots.code,
     })
     .from(trainings)
@@ -189,6 +197,7 @@ export default async function TrainingsPage({
                 <th className="kh-th">{HIND.tellijaHinnang}</th>
                 <th className="kh-th">Olek</th>
                 <th className="kh-th">Täitja</th>
+                <th className="kh-th">Akt</th>
               </tr>
             </thead>
             <tbody>
@@ -197,7 +206,7 @@ export default async function TrainingsPage({
                   {(index === 0 || monthKey(filtered[index - 1]!.eventDate) !== monthKey(row.eventDate)) && (
                     <tr>
                       <td
-                        colSpan={12}
+                        colSpan={13}
                         className="kh-td bg-[var(--color-surface-alt)] text-[12px] font-semibold uppercase tracking-wide text-[var(--color-muted)]"
                       >
                         {formatMonthLabel(row.eventDate)}
@@ -207,7 +216,7 @@ export default async function TrainingsPage({
                   {/* [L-28] a cluster's groups sit under one header row */}
                   {row.clusterCode && (index === 0 || filtered[index - 1]!.clusterCode !== row.clusterCode) && (
                     <tr data-testid="cluster-header">
-                      <td colSpan={12} className="kh-td text-[12.5px] font-semibold">
+                      <td colSpan={13} className="kh-td text-[12.5px] font-semibold">
                         Klaster {row.clusterCode} · {row.title} · {formatPeriod(row.eventDate, row.eventEnd)} ·{' '}
                         {describeGroups(
                           filtered
@@ -258,6 +267,23 @@ export default async function TrainingsPage({
                           partnerName={holderNames.get(row.allocatedLotPartnerId) ?? 'partner'}
                         />
                       </div>
+                    )}
+                  </td>
+                  <td className="kh-td">
+                    {(row.status === 'allocated' || row.status === 'completed') && row.allocatedLotPartnerId && (
+                      <BuyerActControls
+                        canWrite={canWrite}
+                        act={{
+                          trainingId: row.id,
+                          code: row.code,
+                          completed: row.status === 'completed',
+                          due: row.eventDate <= today,
+                          dueText: formatIsoDay(row.eventDate),
+                          partnerText: row.actPartnerAt ? `${formatDateTimeShort(row.actPartnerAt)} · ${row.actPartnerBy}` : null,
+                          buyerText: row.actBuyerAt ? `${formatDateTimeShort(row.actBuyerAt)} · ${row.actBuyerBy}` : null,
+                          rejectReason: row.actRejectReason,
+                        }}
+                      />
                     )}
                   </td>
                 </tr>

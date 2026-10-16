@@ -29,6 +29,7 @@ import {
   cancelOrderTraining,
 } from '../rounds/engine';
 import { generateProtocolForEndedRound } from '../rounds/protocol';
+import { markActByBuyer, rejectAct } from '../rounds/act';
 import { assertBuyerActor } from '../auth/actor';
 import { parseEstonianInstant } from '@/domain/round-definition';
 import { reminderRuleFromFields, type ReminderRule } from '@/domain/reminder';
@@ -365,6 +366,29 @@ export async function recordAllocatedWithdrawalAction(form: FormData): Promise<A
       DASHBOARD,
     ]);
     return ok('Loobumine on registreeritud: koolitus on jäägis ja partner sai kviitungi. Koolituse saab sama koodiga uude vooru panna.');
+  } catch (error) {
+    return fail(describeError(error));
+  }
+}
+
+/** [E-11] The buyer's half of the acceptance act: „vastu võetud“. */
+export async function markActByBuyerAction(form: FormData): Promise<ActionOutcome> {
+  const trainingId = fieldText(form, 'trainingId');
+  try {
+    const { completed } = await buyerWrite((ctx) => markActByBuyer(ctx, trainingId), ['/tellija/koolitused', DASHBOARD]);
+    return ok(completed ? 'Akt on kinnitatud mõlema poole märkega — koolitus on lõpetatud.' : 'Vastuvõtt märgitud. Akt jõustub, kui partner märgib töö üleandmise.');
+  } catch (error) {
+    return fail(describeError(error));
+  }
+}
+
+/** [E-11] The buyer does not accept the act — with a reason the partner reads. */
+export async function rejectActAction(form: FormData): Promise<ActionOutcome> {
+  const trainingId = fieldText(form, 'trainingId');
+  const reason = fieldText(form, 'reason');
+  try {
+    await buyerWrite((ctx) => rejectAct(ctx, trainingId, reason), ['/tellija/koolitused', DASHBOARD]);
+    return ok('Akt on tagasi lükatud ja partnerit teavitatud.');
   } catch (error) {
     return fail(describeError(error));
   }

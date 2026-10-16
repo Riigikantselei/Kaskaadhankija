@@ -287,6 +287,14 @@ export interface CalendarEntry {
   kind: 'allocated' | 'completed' | 'confirmed';
   roundId: string | null;
   roundCode: string | null;
+  /** [E-11] the acceptance act's halves; null on a confirmed (not allocated) line */
+  act: {
+    partnerAt: number | null;
+    partnerBy: string;
+    buyerAt: number | null;
+    buyerBy: string;
+    rejectReason: string;
+  } | null;
 }
 
 /**
@@ -325,18 +333,27 @@ export function partnerCalendar(tx: Reader, partnerId: string): CalendarEntry[] 
   };
 
   const held: CalendarEntry[] = tx
-    .select({ ...base, status: trainings.status })
+    .select({
+      ...base,
+      status: trainings.status,
+      actPartnerAt: trainings.actPartnerAt,
+      actPartnerBy: trainings.actPartnerBy,
+      actBuyerAt: trainings.actBuyerAt,
+      actBuyerBy: trainings.actBuyerBy,
+      actRejectReason: trainings.actRejectReason,
+    })
     .from(trainings)
     .innerJoin(lots, eq(lots.id, trainings.lotId))
     .where(
       and(inArray(trainings.allocatedLotPartnerId, memberships), inArray(trainings.status, ['allocated', 'completed'])),
     )
     .all()
-    .map(({ status, ...row }) => ({
+    .map(({ status, actPartnerAt, actPartnerBy, actBuyerAt, actBuyerBy, actRejectReason, ...row }) => ({
       ...row,
       kind: status === 'completed' ? 'completed' : 'allocated',
       roundId: null,
       roundCode: null,
+      act: { partnerAt: actPartnerAt, partnerBy: actPartnerBy, buyerAt: actBuyerAt, buyerBy: actBuyerBy, rejectReason: actRejectReason },
     }));
 
   const pending: CalendarEntry[] = [];
@@ -356,7 +373,7 @@ export function partnerCalendar(tx: Reader, partnerId: string): CalendarEntry[] 
       .where(inArray(trainings.id, marked))
       .all();
     for (const row of rows) {
-      pending.push({ ...row, kind: 'confirmed', roundId: round.id, roundCode: round.code });
+      pending.push({ ...row, kind: 'confirmed', roundId: round.id, roundCode: round.code, act: null });
     }
   }
 

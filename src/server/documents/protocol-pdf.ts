@@ -139,7 +139,7 @@ export function pdfSafeText(value: string): string {
 }
 
 /** Recursively fold every string of a document definition through `pdfSafeText`. */
-function safeTree<T>(node: T): T {
+export function safeTree<T>(node: T): T {
   if (typeof node === 'string') return pdfSafeText(node) as unknown as T;
   if (Array.isArray(node)) return node.map(safeTree) as unknown as T;
   if (node instanceof Date) return node;
