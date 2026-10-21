@@ -224,7 +224,7 @@ export function NewRoundForm({
                   <th className="kh-th">Koolitus</th>
                   <th className="kh-th">Formaat</th>
                   <th className="kh-th">Toimumine</th>
-                  <th className="kh-th">Maakond</th>
+                  <th className="kh-th">Koht</th>
                   <th className="kh-th">Sihtrühm</th>
                   <th className="kh-th">{HIND.osalejateArv}</th>
                   <th className="kh-th">{HIND.tellijaHinnang}</th>
@@ -275,7 +275,7 @@ export function NewRoundForm({
                       </td>
                       <td className="kh-td text-[13px] whitespace-nowrap">{training.workshopType}</td>
                       <td className="kh-td whitespace-nowrap tabular-nums">{training.eventDate}</td>
-                      <td className="kh-td text-[13px] whitespace-nowrap">{training.county}</td>
+                      <td className="kh-td text-[13px]">{training.county}</td>
                       <td className="kh-td text-[13px] whitespace-nowrap">{training.targetGroup}</td>
                       <td className="kh-td tabular-nums">
                         {item.kind === 'cluster'

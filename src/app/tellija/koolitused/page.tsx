@@ -15,6 +15,7 @@ import { buyerCanWrite } from '@/server/auth/actor';
 import { lots, partners, lotPartners, trainings } from '@/db/schema';
 import { describeGroups } from '@/domain/clusters';
 import { formatDateTimeShort, formatEur, formatEventWhen, formatIsoDay, formatMonthLabel, formatPeriod, monthKey, tallinnIsoDay } from '@/domain/format';
+import { placeText } from '@/domain/places';
 import {
   TARGET_GROUPS,
   TRAINING_STATUS_LABELS,
@@ -61,6 +62,7 @@ export default async function TrainingsPage({
       clusterCode: trainings.clusterCode,
       groupIndex: trainings.groupIndex,
       county: trainings.county,
+      locationText: trainings.locationText,
       targetGroup: trainings.targetGroup,
       participantCount: trainings.participantCount,
       language: trainings.language,
@@ -190,7 +192,7 @@ export default async function TrainingsPage({
                 <th className="kh-th">Osa</th>
                 <th className="kh-th">Formaat</th>
                 <th className="kh-th">Toimumine</th>
-                <th className="kh-th">Maakond</th>
+                <th className="kh-th">Koht</th>
                 <th className="kh-th">Sihtrühm</th>
                 <th className="kh-th">{HIND.osalejateArv}</th>
                 <th className="kh-th">Keel</th>
@@ -237,7 +239,7 @@ export default async function TrainingsPage({
                   <td className="kh-td whitespace-nowrap tabular-nums">
                     {formatEventWhen(row)}
                   </td>
-                  <td className="kh-td text-[13px] whitespace-nowrap">{row.county}</td>
+                  <td className="kh-td text-[13px]">{placeText(row.county, row.locationText)}</td>
                   <td className="kh-td text-[13px] whitespace-nowrap">
                     {TARGET_GROUPS[row.targetGroup]}
                   </td>

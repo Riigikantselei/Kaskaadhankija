@@ -13,6 +13,7 @@ import { frameworkIdentity } from '@/server/framework';
 import { frameworkTitleLine } from '@/domain/framework';
 import { lots, rounds, trainings } from '@/db/schema';
 import { formatDateTimeShort, formatEur, formatEventWhen } from '@/domain/format';
+import { placeText } from '@/domain/places';
 import {
   ROUND_STATUS_LABELS,
   ROUND_STATUS_TONES,
@@ -71,6 +72,7 @@ export default async function BuyerDashboard() {
       eventTime: trainings.eventTime,
       dateKind: trainings.dateKind,
       county: trainings.county,
+      locationText: trainings.locationText,
       estimatedValueEur: trainings.estimatedValueEur,
       lotId: trainings.lotId,
       lotCode: lots.code,
@@ -234,7 +236,7 @@ export default async function BuyerDashboard() {
                 code: l.code,
                 title: l.title,
                 eventDate: formatEventWhen(l),
-                county: l.county,
+                county: placeText(l.county, l.locationText),
                 value: formatEur(l.estimatedValueEur),
                 lotId: l.lotId,
                 lotCode: l.lotCode,

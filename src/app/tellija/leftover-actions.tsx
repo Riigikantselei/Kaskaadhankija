@@ -61,7 +61,7 @@ export function LeftoverActions({ leftovers }: { leftovers: LeftoverRow[] }) {
                     <th className="kh-th">Kood</th>
                     <th className="kh-th">Koolitus</th>
                     <th className="kh-th">Toimumine</th>
-                    <th className="kh-th">Maakond</th>
+                    <th className="kh-th">Koht</th>
                     <th className="kh-th">Tellija hinnang</th>
                     <th className="kh-th">Tühista</th>
                   </tr>
@@ -80,7 +80,7 @@ export function LeftoverActions({ leftovers }: { leftovers: LeftoverRow[] }) {
                       <td className="kh-td font-semibold whitespace-nowrap">{row.code}</td>
                       <td className="kh-td">{row.title}</td>
                       <td className="kh-td whitespace-nowrap tabular-nums">{row.eventDate}</td>
-                      <td className="kh-td whitespace-nowrap">{row.county}</td>
+                      <td className="kh-td">{row.county}</td>
                       <td className="kh-td whitespace-nowrap tabular-nums">{row.value}</td>
                       <td className="kh-td">
                         <ActionButton

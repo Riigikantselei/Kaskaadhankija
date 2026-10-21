@@ -13,6 +13,7 @@ import { buyerCanWrite } from '@/server/auth/actor';
 import { ReadOnlyNote } from '@/components/read-only-note';
 import { lotPartners, lots, trainings } from '@/db/schema';
 import { formatEur, formatEventWhen } from '@/domain/format';
+import { placeText } from '@/domain/places';
 import { TARGET_GROUPS } from '@/domain/round-statuses';
 import { WORKSHOP_TYPE_LABELS } from '@/domain/statuses';
 import { NewRoundForm } from './new-round-form';
@@ -137,7 +138,7 @@ export default async function NewRoundPage({
           title: t.title,
           workshopType: WORKSHOP_TYPE_LABELS[t.workshopType],
           eventDate: formatEventWhen(t),
-          county: t.county,
+          county: placeText(t.county, t.locationText),
           targetGroup: TARGET_GROUPS[t.targetGroup],
           participantCount: t.participantCount,
           value: formatEur(t.estimatedValueEur),
