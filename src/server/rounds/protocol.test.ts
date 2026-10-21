@@ -562,6 +562,19 @@ it('draws every table inside the page [A4, 36pt margins]', async () => {
     expect(text).toContain('jaotust ei tehtud');
   });
 
+  it('[L-20] lists each training with its place — the town or county and the location', async () => {
+    const roundId = openRound();
+    harness.raw.prepare('UPDATE trainings SET location_text = ? WHERE id = ?').run('Linnaraamatukogu', fx.trainingIds[0]);
+    confirm(roundId, 0, [fx.trainingIds[0]]);
+    harness.advance(4 * 86_400_000);
+    harness.write((ctx) => closeRound(ctx, roundId));
+    harness.write((ctx) => confirmAllocation(ctx, roundId));
+    const protocol = stored(roundId);
+    const text = pdfText(await buildProtocolPdf(protocol.data, protocol.contentHash));
+    expect(text).toContain('asukoht');
+    expect(text).toContain('Linnaraamatukogu');
+  });
+
   it('substitutes the glyphs a standard PDF font cannot write', async () => {
     const roundId = openRound();
     // A training title with characters WinAnsi has, and one it has not.

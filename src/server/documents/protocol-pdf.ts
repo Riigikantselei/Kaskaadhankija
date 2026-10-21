@@ -356,8 +356,8 @@ function buildDefinition(data: RoundProtocolData, hash: string): TDocumentDefini
   content.push(
     heading(isCluster ? `2. Vooru klastrid ja rühmad (${live.length} rühma)` : `2. Vooru koolitused (${live.length})`),
     table(
-      ['Kood', 'Nimetus', isCluster ? 'Periood' : 'Kuupäev', 'Formaat', 'Maakond', 'Sihtrühm', HIND.osalejateArv, 'Keel'],
-      [11, 27, 10, 10, 17, 13, 7, 5],
+      ['Kood', 'Nimetus', isCluster ? 'Periood' : 'Kuupäev', 'Formaat', 'Maakond, asukoht', 'Sihtrühm', HIND.osalejateArv, 'Keel'],
+      [11, 24, 10, 9, 22, 12, 7, 5],
       trainingRows,
       { empty: 'Voorus ei olnud ühtki koolitust.' },
     ),
