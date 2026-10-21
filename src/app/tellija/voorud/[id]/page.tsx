@@ -16,6 +16,7 @@ import { lots, roundTrainings, rounds, trainings } from '@/db/schema';
 import { allocate } from '@/domain/allocate';
 import { describeGroups, groupIndexRange, UNIT_WORDS } from '@/domain/clusters';
 import { formatDateTimeShort, formatEur, formatEventWhen, formatIsoDay, formatPeriod, formatTime, tallinnLocalInput } from '@/domain/format';
+import { placeText } from '@/domain/places';
 import { CAP_OPTIONS_LABELS, capLabel,
   PARTICIPANT_OUTCOME_LABELS,
   RESPONSE_STATE_LABELS,
@@ -537,7 +538,7 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
                     <td className="kh-td text-[13px] whitespace-nowrap">
                       {formatPeriod(cluster.head.eventDate, cluster.head.eventEnd)}
                       <div className="text-[11px] text-[var(--color-muted)]">
-                        {WORKSHOP_TYPE_LABELS[cluster.head.workshopType]} · {cluster.head.county}
+                        {WORKSHOP_TYPE_LABELS[cluster.head.workshopType]} · {placeText(cluster.head.county, cluster.head.locationText)}
                       </div>
                     </td>
                     {partnerColumns.map((column) => {
@@ -637,7 +638,7 @@ export default async function RoundDetail({ params }: { params: Promise<{ id: st
                     <td className="kh-td text-[13px] whitespace-nowrap tabular-nums">
                       {formatEventWhen(training)}
                       <div className="text-[11px] text-[var(--color-muted)]">
-                        {WORKSHOP_TYPE_LABELS[training.workshopType]} · {training.county}
+                        {WORKSHOP_TYPE_LABELS[training.workshopType]} · {placeText(training.county, training.locationText)}
                       </div>
                     </td>
                     {partnerColumns.map((column) => {
